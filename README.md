@@ -1,146 +1,158 @@
-***
+# Blinx – Model-Driven UI Framework
 
-# Model-Driven JavaScript Framework (Conceptual Summary)
+## Overview
 
-***
+Blinx is a headless, model-driven UI framework that renders forms and tables from a shared schema. The core runtime stays agnostic of any design system and delegates DOM concerns to adapters (`lib/blinx.form.js`, `lib/blinx.table.js`, or custom renderers). This separation keeps rendering fast, predictable, and portable across Tailwind, Chakra, Headless UI, Radix UI, or any bespoke component library while reusing validation, diffing, and persistence semantics.
 
-## **Initial Goal**
+What ships today:
 
-Build a **model-driven, schema-aware UI framework** that:
+- Dynamic forms and tables generated from the combination of model metadata and view descriptions.
+- Two-way binding between UI and dataset via the store.
+- Field rendering driven by datatype, constraints, and view preferences (readonly, required, min/max, CSS hints).
+- Layout definitions that allow form grouping to evolve independently from the data model.
+- Client-side runtime with pagination, diff tracking, and interceptor hooks.
 
-*   Dynamically generates UI from **data model** + **view description**.
-*   Supports **two-way binding** between UI and dataset.
-*   Decides field rendering based on **datatype** and **preferences** (readonly, required, min/max, CSS).
-*   Allows **view layout** separate from data model (grouping, visibility).
-*   Integrates with modern CSS frameworks (Tailwind, Chakra UI).
-*   Avoids SSR, works client-side, and is **performance-friendly**.
+## Core Goals
 
-***
+1. Keep the runtime headless so any adapter can own DOM concerns.
+2. Provide schema-aware rendering to avoid hand-written forms/tables.
+3. Funnel every action (`save`, `reset`, `next`, `prev`, `create`, `delete`) through a shared interceptor pipeline.
+4. Stay client-first and performance-conscious without leaning on SSR.
 
-## **Core Architecture**
+## Architecture & Data Flow
 
-    Core (Headless)
-     ├─ Model Engine (types, constraints, preferences)
-     ├─ View Engine (layout, grouping, visibility)
-     ├─ Store (two-way binding, diff, reset, commit, add/remove)
-     ├─ Validation (rules, lifecycle)
-     └─ Runtime (render orchestration)
+```
+            Core (Headless)
+             ├─ Model engine (types, constraints, preferences)
+             ├─ View engine (layout, grouping, visibility)
+             ├─ Store (two-way binding, diff, reset/commit/add/remove)
+             ├─ Validation lifecycle
+             └─ Runtime orchestrator
 
-    UI Adapters
-     ├─ Default HTML Adapter (Tailwind-friendly)
-     ├─ Chakra Adapter (React)
-     ├─ Headless UI / Radix UI Adapter
+            UI Adapters
+             ├─ Default HTML adapter (Tailwind-friendly)
+             ├─ Chakra adapter (React)
+             └─ Headless UI / Radix UI adapters
+```
 
-***
+1. **Model** (`model/product.model.js`) describes fields, datatypes, constraints, and defaults.
+2. **View descriptors** outline sections, column layouts, and visibility rules.
+3. **Store** (`lib/blinx.store.js`) hydrates model + dataset, exposes mutation APIs, and emits granular events.
+4. **UI adapters** (`lib/blinx.form.js`, `lib/blinx.table.js`, or customs) build DOM widgets using model + view metadata.
 
-## **Key Features Implemented**
+This layering keeps validation, diffing, and messaging logic reusable while adapters focus on look-and-feel.
 
-*   **Dynamic Form Rendering** from model + view.
-*   **Dynamic Table Rendering** with pagination.
-*   **Two-way binding** via store.
-*   **Validation** (basic, extendable).
-*   **Navigation** between records (Next/Prev, direct index).
-*   **Click-to-edit** from table rows.
-*   **Reset & Save** with diff tracking.
-*   **Create/Delete** operations for form and table.
-*   **Selection in table** for bulk delete.
-*   **Interceptor pattern** for all actions (Save, Reset, Next, Prev, Create, Delete):
-    *   Listeners receive a `processor` object with:
-        *   `state` (currentIndex, record, store)
-        *   `controls` (DOM refs for buttons/status)
-        *   `proceed()` method to execute default behavior.
-    *   Allows pre/post custom logic without breaking defaults.
+## Store Principles
 
-***
+- Snapshot cloning keeps `original` and `current` arrays isolated so diffing remains cheap JSON comparisons.
+- Every mutator (`setField`, `addRecord`, `removeRecords`, `commit`, `reset`) routes through `notify`, which publishes both structured paths and payloads for downstream listeners.
+- `diff()` walks records index-first and only inspects keys that exist on the record, making commit payloads small and easy to surface in status messages.
+- Store consumers should never mutate returned records in-place; use the provided setters to keep notifications and diffs accurate.
 
-## **Default Components**
+## Form Rendering
 
-*   Form:
-    *   Save, Reset, Next, Previous, Create, Delete buttons.
-    *   Record indicator.
-    *   Status message.
-*   Table:
-    *   Pagination controls.
-    *   Create button.
-    *   Delete Selected button.
-    *   Status message.
-    *   Selection checkboxes.
+- Sections render into a `DocumentFragment`, then flush to the DOM in one pass to minimize layout thrash.
+- Fields delegate to the active adapter through `ui.createField(...)`, which returns `{ el, ... }` so widgets can manage their own lifecycle.
+- Navigation (`Next/Prev`) is purely index-driven; the form rebinds itself whenever the selected record changes.
+- Indicator and status nodes stay optional and are wired up through injected `controls`, letting integrators map them to any markup.
+- Interceptors wrap every command, receiving a `processor` object with state, DOM references, and an idempotent `proceed()` so middleware chains cannot double-run defaults.
 
-***
+### Default Form Controls
 
-## **Performance Enhancements**
+- Save, Reset, Next, Previous, Create, Delete buttons.
+- Record indicator.
+- Status message region.
 
-*   **DocumentFragment** for batch DOM updates in form and table rendering.
-*   **Pagination** for tables.
-*   **Diff-aware commit** (commit only if changes exist).
-*   **Clear saveStatus** on record navigation.
-*   **Virtualization** suggested for large datasets (future).
+## Table Rendering
 
-***
+- Client-side pagination (default page size 20) maintains a shared `page` pointer and updates Prev/Next controls.
+- Checkbox selection tracks row indexes inside a `Set`. Interceptors can read `processor.state.selected` before destructive actions.
+- `ui.formatCell(value, fieldDef)` lets adapters decide how to visualize primitives (chips, currency, badges, etc.).
+- The table subscribes to store events and rebuilds the visible page whenever the dataset mutates.
 
-## **Extensibility**
+### Default Table Controls
 
-*   **formatCell** moved to UI adapter for pluggable cell rendering.
-*   Future adapters (Chakra, Radix) can override:
-    *   `createField()` for custom widgets.
-    *   `formatCell()` for richer table cells (badges, chips).
-*   Interceptor hooks allow enterprise-specific logic without modifying core.
+- Pagination controls.
+- Create button.
+- Delete Selected button.
+- Status message region.
+- Selection checkboxes.
 
-***
+## Validation Lifecycle
 
-## **Event Handling**
+- `validateField` encapsulates the rule set (required, enum, length, min/max, etc.).
+- Form validation runs on demand inside `doSave`, short-circuiting on the first failing section.
+- Failed validations push a status message and keep the user on the same record; adapters are free to paint inline errors.
 
-*   Store emits events: `reset`, `add`, `remove`.
-*   Form listens to:
-    *   `reset` → refresh UI.
-    *   `remove` → adjust index, rebuild form, clear status.
-*   Table listens to store changes → refresh rows.
-*   Avoid redundant refresh in `doDelete()` since `remove` event handles UI update.
+## Status & Messaging Strategy
 
-***
+- Save/Reset/Delete actions surface user-friendly messages through the injected `status` DOM node using semantic colors (`#2f855a` success, `#e53e3e` errors, slate for neutral states).
+- Form and table share this pattern so embedding apps can style a single CSS class to affect both widgets.
 
-## **Design Decisions**
+## Interceptors & Events
 
-*   **Centralized UI refresh** in event handlers (not in action methods).
-*   **Idempotent proceed()** in interceptors (runs default only once).
-*   **Default record creation** based on model field types.
-*   **Status messaging** standardized for all actions.
+- The store emits `reset`, `add`, and `remove` events. Form and table subscribe to keep UI in sync without redundant refresh calls.
+- The form listens for `reset` to rebuild UI, and for `remove` to adjust index, rebuild sections, and clear status.
+- Table refreshes rows automatically on store mutations, so `doDelete()` relies on event-driven updates instead of manual DOM surgery.
+- Interceptors provide hooks for analytics, confirmations, or API orchestration without touching core logic.
 
-***
+## Performance Considerations
 
-## **Future Enhancements**
+- `DocumentFragment` batching reduces layout thrash across both form and table renders.
+- Pagination keeps table work bounded; virtualization remains on the roadmap for larger datasets.
+- Diff-aware commits skip writes when no changes exist and clear `saveStatus` on record navigation.
 
-*   **Conditional display rules** in view.
-*   **Undo/Redo stack** in store.
-*   **Soft delete** (mark inactive instead of removal).
-*   **Bulk create** with prefilled values.
-*   **No records placeholder** in form when dataset is empty.
-*   **React/Chakra adapter** for enterprise-grade UI.
-*   **Virtualized table rendering** for large datasets.
+## Extensibility Hooks
 
-***
+- **Interceptors**: Pre/post logic without mutating core behavior.
+- **Adapters**: Override `createField` and `formatCell` to integrate with any component library.
+- **View schema**: Extend sections/columns with conditional visibility, spans, or custom renderers.
+- **Store subscribe**: External listeners can sync with remote APIs, websockets, or optimistic UI flows.
 
-## ✅ Why This Framework Is Robust
+## Current Capabilities
 
-*   **Headless core** decoupled from UI.
-*   **Interceptor pattern** for enterprise customization.
-*   **Performance-conscious** (DocumentFragment, pagination).
-*   **Extensible** (UI adapters, hooks).
-*   **Reactive** (listens to store events for sync).
+- Dynamic form rendering from model + view.
+- Dynamic table rendering with pagination.
+- Two-way data binding via the store.
+- Click-to-edit from table rows.
+- Record navigation (Next/Prev, direct index) plus record indicator.
+- Reset & Save with diff tracking and messaging.
+- Create/Delete operations for both form and table.
+- Selection in the table for bulk delete.
+- Interceptor pattern for every action with access to state, controls, and `proceed()`.
+- Event-driven UI refresh so actions stay slim and predictable.
 
-***
+## Future Enhancements
 
-### ✅ Key Improvements Over Time
+- Conditional display rules baked into the view schema.
+- Undo/Redo stack in the store.
+- Soft delete flows (mark inactive instead of removal).
+- Bulk create with prefilled values.
+- "No records" placeholder state when the dataset is empty.
+- React/Chakra adapter for enterprise-grade UI.
+- Virtualized table rendering for very large datasets.
 
-1.  Added **Next/Prev navigation** and record indicator.
-2.  Introduced **interceptor pattern** for all actions.
-3.  Added **Create/Delete** buttons for form and table.
-4.  Implemented **selection** in table for bulk delete.
-5.  Moved **formatCell** to adapter for extensibility.
-6.  Optimized rendering with **DocumentFragment**.
-7.  Enhanced **store.diff()** to detect add/remove.
-8.  Handled **remove event** in form for auto-refresh.
-9.  Cleared **saveStatus** on record navigation.
+## Open Questions / Next Bets
+
+- How should conditional visibility rules be declared so both form and table understand them?
+- Can adapter-level theming tokens keep Tailwind, Chakra, and other libraries aligned?
+- Should diff batching understand array moves (drag-and-drop) rather than treating them as delete+add pairs?
+
+## Non-Goals (Current)
+
+- Server-side rendering (SSR); focus is on client-first experiences.
+- Real-time collaboration; store events remain local.
+- Built-in persistence; Blinx surfaces diffs, but host applications choose how and where to store them.
+
+## Key Improvements Over Time
+
+1. Added Next/Prev navigation and the record indicator.
+2. Introduced the interceptor pattern for all actions with idempotent `proceed()`.
+3. Added Create/Delete buttons for both form and table.
+4. Implemented table selection for bulk delete.
+5. Moved `formatCell` into adapters for pluggable rendering.
+6. Optimized rendering with `DocumentFragment`.
+7. Enhanced `store.diff()` to detect add/remove events.
+8. Let the form listen to `remove` events for auto-refresh.
+9. Cleared `saveStatus` on record navigation.
 10. Simplified `doDelete()` to rely on event-driven refresh.
-
-***
