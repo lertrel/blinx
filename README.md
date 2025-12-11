@@ -45,9 +45,10 @@ This layering keeps validation, diffing, and messaging logic reusable while adap
 ## Store Principles
 
 - Snapshot cloning keeps `original` and `current` arrays isolated so diffing remains cheap JSON comparisons.
-- Every mutator (`setField`, `addRecord`, `removeRecords`, `commit`, `reset`) routes through `notify`, which publishes both structured paths and payloads for downstream listeners.
+- Every mutator (`setField`, `addRecord`, `removeRecords`, `update`, `updateIndex`, `commit`, `reset`) routes through `notify`, which publishes both structured paths and payloads for downstream listeners.
 - `diff()` walks records index-first and only inspects keys that exist on the record, making commit payloads small and easy to surface in status messages.
 - Store consumers should never mutate returned records in-place; use the provided setters to keep notifications and diffs accurate.
+- `update(index, record)` replaces the record in-place and emits an `update` event with both the index and record, while `updateIndex(index)` replays the same event when the object was mutated externally and only needs to be re-announced.
 
 ## Form Rendering
 
@@ -91,7 +92,7 @@ This layering keeps validation, diffing, and messaging logic reusable while adap
 
 ## Interceptors & Events
 
-- The store emits `reset`, `add`, and `remove` events. Form and table subscribe to keep UI in sync without redundant refresh calls.
+- Store events are granular: `add`, `update`, and `reset` fire once per record, while `remove` batches all removed records into a single payload and `commit` ships the entire dataset snapshot plus the store reference for query access.
 - The form listens for `reset` to rebuild UI, and for `remove` to adjust index, rebuild sections, and clear status.
 - Table refreshes rows automatically on store mutations, so `doDelete()` relies on event-driven updates instead of manual DOM surgery.
 - Interceptors provide hooks for analytics, confirmations, or API orchestration without touching core logic.
