@@ -204,26 +204,30 @@ if (def.pattern && !new RegExp(def.pattern).test(value)) errors.push('Invalid fo
 - [2512102225 DONE] Store should provide get for its associated data model
 - [2512102226 DONE] Parameter model should be removed from renderBlinxForm and renderBlinxTable
 - [2512102227 DONE] Internally renderBlinxForm and renderBlinxTable should consult store for data model and field structure
-- [2512102228 PENDING] Explore Ajv for JSON Schema validation (fast, mature). Convert productModel into JSON Schema and plug Ajv for robust validation.
-- [2512102229 PENDING] Zod for developer-friendly schemas; use zod-to-json-schema if you need JSON Schema adapters.
+- [2512102228 PENDING] Yup ... Explore Ajv for JSON Schema validation (fast, mature). Convert productModel into JSON Schema and plug Ajv for robust validation.
+- [2512102229 PENDING] Yup ... Zod for developer-friendly schemas; use zod-to-json-schema if you need JSON Schema adapters.
 - [2512102230 PENDING] Store should validate data model against dataset
 
-
-
---- BACK LOGS ---
 [2512102233 EPIC] EVENTBUS
-- [2510132211 PENDING] Model (store) will be acting as model-specific eventbus
-- [2512102257 PENDING] Declare event types as export const Eventtypes = { ... } in core.store.js similar to DataTypes in file core.model.js
-- [2512102258 PENDING] Consolidate event types to be add, remove, update, commit, reset
-- [2512102259 PENDING] Event add, update, reset should be fired for each record whereas, to improve performance, remove be fired for all removed records at once (array)and commit should be fired for all records after committed at once (array)
+- [2510132211 DONE] Model layer (createBlinxStore) sould be acting as model-specific eventbus
+- Declare event types as export const EventTypes = { add: 'add', ... } in core.store.js similar to DataTypes with followings events add, remove, update, commit, reset
+- When notify should refer to event by using EventTypes instead of string e.g., 'add', 'remove', 'reset', etc.
+- Check in other files if any component is listening to event thrown from store setField if no change in setField from notify([idx, field], value); to notify([EventTypes.update, idx, field], value);
+- [2512102259 PENDING] Event add, update, reset should be fired for each record whereas, to improve performance, remove be fired for all removed records at once (array) and commit should be fired for all records after committed at once (array)
 - [2512102300 PENDING] Add method updateIndex(number) accept index of record to be updated as parameter (assuming the actual object have been modified outside of store), fire event update to the listener (including both index, and actual record object)
 - [2512102301 PENDING] Add method update(number, object) accept index of record, and actual record object to be updated as parameters, then replace the given object to the current array, fire event update to the listener (including both index, and actual record object)
 - [2512102302 PENDING] After commit fire event commit to all listeners; provide them with store object for them to query data
-- [2510132211 PENDING] Adding more standardized and useful events to model (store)
-- [2512102234 PENDING] Instead of listening to renderForm, renderTable event, application should be listening from Model Event (store)
-- [2512102235 PENDING] Refectoring renderForm and renderTable to fire model event instead of their own custom events
-- [2512102236 PENDING] Refectoring renderForm and renderTable to also listen to Model Event (store) to make both view in sync when updating data model from the other view
+- [2512102234 CANCELLED] Instead of listening to renderBlinxForm, renderBlinxTable event, application should be listening from Model Event (store)
+- [2512102235 CANCELLED] Refectoring renderForm and renderTable to fire model event instead of their own custom events
+- [2512102236 CANCELLED] Refectoring renderForm and renderTable to also listen to Model Event (store) to make both view in sync when updating data model from the other view
+- [2512110937 CANCELLED] Any listener that subscribe through store.subscribe should refer to event by using EventTypes instead of string e.g., 'add', 'remove', 'reset', etc.
+- [2512111308 PENDING] Internally renderBlinxForm and renderBlinkTable should listen to events add, remove, update, commit, reset and refresh its own status to keep UI update to date when data are updated from else where.
 
+[2512111235 EPIC] UNIT TEST
+- [2512111236 EPIC] Adding unit test usingn Jest
+- [2512111236 EPIC] Adding integration test usingn Playwright
+
+--- BACK LOGS ---
 [2510132200 EPIC] APPLYING OBSERVABLE PATTERN (RXJS)
 - [2510132202 PENDING] FOR DATA MODEL (STORE), store should provide observable apis (e.g., for traversing through the whole data set, deleted items, pagination set of data, etc.)
 - [2512102332 PENDING] FOR DATA MODEL (STORE), alternate to array it should accept observable when instantiating (for large data set)
