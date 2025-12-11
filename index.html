@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <title>Blinx Demo</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+  <h1>Blinx: Model‑Driven UI</h1>
+  <div class="card">
+    <div id="form-container"></div>
+    <div class="flex">
+      <button id="btn-prev" class="btn">Previous</button>
+      <button id="btn-next" class="btn">Next</button>
+      <span id="record-indicator"></span>
+    </div>
+    <div class="flex">
+      <button id="btn-save" class="btn btn-primary">Save</button>
+      <button id="btn-reset" class="btn">Reset</button>
+      <button id="btn-create" class="btn">Create</button>
+      <button id="btn-delete" class="btn">Delete</button>
+      <span id="save-status"></span>
+    </div>
+  </div>
+  <div class="card">
+    <div id="table-container"></div>
+    <div class="flex">
+      <button id="tbl-create" class="btn">Create</button>
+      <button id="tbl-delete-selected" class="btn">Delete Selected</button>
+      <span id="tbl-status"></span>
+    </div>
+  </div>
+  <script type="module">
+    import { productModel, productFormView, productTableView, initialDataset } from './model/product.model.js';
+    import { createBlinxStore } from './lib/blinx.store.js';
+    import { BlinxDefaultAdapter } from './lib/blinx.adapters.default.js';
+    import { renderBlinxForm } from './lib/blinx.form.js';
+    import { renderBlinxTable } from './lib/blinx.table.js';
+
+    const store = createBlinxStore(initialDataset);
+    const ui = new BlinxDefaultAdapter();
+
+    const { formApi } = renderBlinxForm({
+      root: document.getElementById('form-container'),
+      model: productModel,
+      view: productFormView,
+      store,
+      ui,
+      recordIndex: 0,
+      controls: {
+        saveButtonId: 'btn-save',
+        resetButtonId: 'btn-reset',
+        nextButtonId: 'btn-next',
+        prevButtonId: 'btn-prev',
+        createButtonId: 'btn-create',
+        deleteButtonId: 'btn-delete',
+        recordIndicatorId: 'record-indicator',
+        saveStatusId: 'save-status',
+      }
+    });
+
+    const { tableApi } = renderBlinxTable({
+      root: document.getElementById('table-container'),
+      model: productModel,
+      view: productTableView,
+      store,
+      ui,
+      pageSize: 10,
+      onRowClick: (rowIndex) => formApi.setRecordIndex(rowIndex),
+      controls: {
+        createButtonId: 'tbl-create',
+        deleteSelectedButtonId: 'tbl-delete-selected',
+        statusId: 'tbl-status',
+      }
+    });
+  </script>
+</body>
+
+</html>

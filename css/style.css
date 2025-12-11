@@ -1,0 +1,88 @@
+/* Minimal styles so UI is readable even without Tailwind */
+body {
+    font-family: system-ui, sans-serif;
+    margin: 20px;
+    background: #f7fafc;
+}
+
+.card {
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 16px;
+}
+
+.grid {
+    display: grid;
+    gap: 12px;
+}
+
+.grid-cols-2 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.grid-cols-3 {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.label {
+    font-size: 0.875rem;
+    color: #4a5568;
+    margin-bottom: 4px;
+    display: block;
+}
+
+.input {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #cbd5e0;
+    border-radius: 6px;
+}
+
+.error {
+    color: #e53e3e;
+    font-size: 0.8rem;
+    margin-top: 4px;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+th,
+td {
+    border-bottom: 1px solid #e2e8f0;
+    padding: 8px;
+    text-align: left;
+}
+
+.btn {
+    padding: 8px 12px;
+    border: 1px solid #cbd5e0;
+    background: #edf2f7;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+.btn-primary {
+    background: #3182ce;
+    color: white;
+    border-color: #3182ce;
+}
+
+.section-title {
+    font-weight: 600;
+    margin-bottom: 8px;
+}
+
+.hidden {
+    display: none;
+}
+
+.flex {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
