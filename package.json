@@ -1,0 +1,16 @@
+{
+  "name": "blinx-app",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "test": "jest --runInBand",
+    "test:ci": "jest --ci --runInBand"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.26.0",
+    "@babel/preset-env": "^7.26.0",
+    "babel-jest": "^29.7.0",
+    "jest": "^29.7.0",
+    "jest-junit": "^16.0.0"
+  }
+}
