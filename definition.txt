@@ -183,7 +183,7 @@ MODEL <NAME> {
 [2510130010 DONE] Can you create a scratch book for this whole conversation without source code for future reference?
 
 Enouch with scratch book, ...
-[2510132205 PENDING] REBRANDING USING SPECIFIC PRODUCT NAME AS "Blinx"
+[2510132205 DONE] REBRANDING USING SPECIFIC PRODUCT NAME AS "Blinx"
 [2510130035 DONE] Adopt "Blinx" in important part source code and naming
 [2510130036 DONE] File blinx.model.js should not be part of the framework but rather a separate data model definition end-developer creates. 
 - Thus move DataTypes to blinx.store.js and rename blinx.model.js to something else and move it out of folder 'lib' possibly in place it in new folder 'model' (save level as lib)
@@ -213,21 +213,72 @@ if (def.pattern && !new RegExp(def.pattern).test(value)) errors.push('Invalid fo
 - Declare event types as export const EventTypes = { add: 'add', ... } in core.store.js similar to DataTypes with followings events add, remove, update, commit, reset
 - When notify should refer to event by using EventTypes instead of string e.g., 'add', 'remove', 'reset', etc.
 - Check in other files if any component is listening to event thrown from store setField if no change in setField from notify([idx, field], value); to notify([EventTypes.update, idx, field], value);
-- [2512102259 PENDING] Event add, update, reset should be fired for each record whereas, to improve performance, remove be fired for all removed records at once (array) and commit should be fired for all records after committed at once (array)
-- [2512102300 PENDING] Add method updateIndex(number) accept index of record to be updated as parameter (assuming the actual object have been modified outside of store), fire event update to the listener (including both index, and actual record object)
-- [2512102301 PENDING] Add method update(number, object) accept index of record, and actual record object to be updated as parameters, then replace the given object to the current array, fire event update to the listener (including both index, and actual record object)
-- [2512102302 PENDING] After commit fire event commit to all listeners; provide them with store object for them to query data
+- [2512102259 DONE] Event add, update, reset should be fired for each record whereas, to improve performance, remove be fired for all removed records at once (array) and commit should be fired for all records after committed at once (array)
+- [2512102300 DONE] Add method updateIndex(number) accept index of record to be updated as parameter (assuming the actual object have been modified outside of store), fire event update to the listener (including both index, and actual record object)
+- [2512102301 DONE] Add method update(number, object) accept index of record, and actual record object to be updated as parameters, then replace the given object to the current array, fire event update to the listener (including both index, and actual record object)
+- [2512102302 DONE] After commit fire event commit to all listeners; provide them with store object for them to query data
 - [2512102234 CANCELLED] Instead of listening to renderBlinxForm, renderBlinxTable event, application should be listening from Model Event (store)
 - [2512102235 CANCELLED] Refectoring renderForm and renderTable to fire model event instead of their own custom events
 - [2512102236 CANCELLED] Refectoring renderForm and renderTable to also listen to Model Event (store) to make both view in sync when updating data model from the other view
 - [2512110937 CANCELLED] Any listener that subscribe through store.subscribe should refer to event by using EventTypes instead of string e.g., 'add', 'remove', 'reset', etc.
-- [2512111308 PENDING] Internally renderBlinxForm and renderBlinkTable should listen to events add, remove, update, commit, reset and refresh its own status to keep UI update to date when data are updated from else where.
+- [2512111308 DONE] Internally renderBlinxForm and renderBlinkTable should listen to events add, remove, update, commit, reset and refresh its own status to keep UI update to date when data are updated from else where.
 
 [2512111235 EPIC] UNIT TEST
-- [2512111236 EPIC] Adding unit test usingn Jest
-- [2512111236 EPIC] Adding integration test usingn Playwright
+- [2512111236 PENDING] Adding unit test usingn Jest
+- [2512111236 PENDING] Adding integration test usingn Playwright
 
 --- BACK LOGS ---
+[2512111706 PENDING] NOW THE FRAMEWORK COMPONENTS ONLY LIMITTED TO FORM AND TABLE, NEED A WAY TO PROVIDE MORE FLEXIBILITY AND EXTENSIBILITY e.g., presenting product cards like market place not as table
+
+[2512111411 PENDING] CUSTOM LOOP ELEMENT
+- I want a custom a function to render custom html element a.k.a. renderBlinxLoop
+- 1. Developer will defind placeholder html element using common container element with html template Ex. 
+<div id="my-application-form">
+	<div class="card">
+		<span name="id"></span>
+		<span name="name"></span>
+		<span name="price"></span>
+		...
+	</div>
+</div>
+- 2. In javascript renderBlinxLoop will be called similar to renderBlinxTable 
+    const { tableApi } = renderBlinxLoop({
+      root: document.getElementById('my-application-form'),
+      view: productTableView,
+      store,
+      ui,
+- 3. renderBlinxLoop will use innerHTML of the root node as a template 
+to render HTML content by looping through all members of the given store and merge with template.
+Each field on data will be match with element that name same as field namd and render based on field data type (Ex. name="id" then record.id will be mapped)
+The end result should be similar to:
+<div id="my-application-form">
+	<div class="card" id="Product_record1">
+		<span id="Product_record1_id"><input type="text" ...</span>
+		<span id="Product_record1_name"><input type="text" ...</span>
+		<span id="Product_record1_price"><input type="number" ...</span>
+		...
+	</div>
+	<div class="card" id="_record1">
+		<span id="Product_record2_id">...</span>
+		<span id="Product_record2_name">...</span>
+		<span id="Product_record2_price">...</span>
+		...
+	</div>
+	<div class="card" id="_record1">
+		<span id="Product_record3_id">...</span>
+		<span id="Product_record3_name">...</span>
+		<span id="Product_record3_price">...</span>
+		...
+	</div>
+	...
+</div>
+
+*NOTE* that 
+- the original template shold not be rendered
+- Shadow DOM and documentFragment should be used
+
+
+
 [2510132200 EPIC] APPLYING OBSERVABLE PATTERN (RXJS)
 - [2510132202 PENDING] FOR DATA MODEL (STORE), store should provide observable apis (e.g., for traversing through the whole data set, deleted items, pagination set of data, etc.)
 - [2512102332 PENDING] FOR DATA MODEL (STORE), alternate to array it should accept observable when instantiating (for large data set)
