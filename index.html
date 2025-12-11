@@ -40,12 +40,11 @@
     import { renderBlinxForm } from './lib/blinx.form.js';
     import { renderBlinxTable } from './lib/blinx.table.js';
 
-    const store = createBlinxStore(initialDataset);
+    const store = createBlinxStore(initialDataset, productModel);
     const ui = new BlinxDefaultAdapter();
 
     const { formApi } = renderBlinxForm({
       root: document.getElementById('form-container'),
-      model: productModel,
       view: productFormView,
       store,
       ui,
@@ -64,7 +63,6 @@
 
     const { tableApi } = renderBlinxTable({
       root: document.getElementById('table-container'),
-      model: productModel,
       view: productTableView,
       store,
       ui,
