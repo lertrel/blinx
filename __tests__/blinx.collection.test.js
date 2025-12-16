@@ -37,6 +37,39 @@ describe('renderBlinxCollection', () => {
     expect(onItemClick).toHaveBeenCalledWith({ index: 0, record: { name: 'A' } });
   });
 
+  test('single selection mode refreshes UI so only one checkbox stays checked', () => {
+    const model = { fields: { name: { type: 'string' } } };
+    const store = createBlinxStore([{ name: 'A' }, { name: 'B' }], model);
+    const ui = new BlinxDefaultAdapter();
+    const root = document.createElement('div');
+
+    renderBlinxCollection({
+      root,
+      store,
+      ui,
+      view: { layout: 'table', columns: [{ field: 'name', label: 'Name' }] },
+      paging: { pageSize: 20 },
+      selection: { mode: 'single' },
+    });
+
+    let cbs = root.querySelectorAll('tbody tr input[type="checkbox"]');
+    expect(cbs.length).toBe(2);
+
+    cbs[0].checked = true;
+    cbs[0].dispatchEvent(new Event('change', { bubbles: true }));
+
+    cbs = root.querySelectorAll('tbody tr input[type="checkbox"]');
+    expect(cbs[0].checked).toBe(true);
+    expect(cbs[1].checked).toBe(false);
+
+    cbs[1].checked = true;
+    cbs[1].dispatchEvent(new Event('change', { bubbles: true }));
+
+    cbs = root.querySelectorAll('tbody tr input[type="checkbox"]');
+    expect(cbs[0].checked).toBe(false);
+    expect(cbs[1].checked).toBe(true);
+  });
+
   test('supports custom layout registry via view.layout key', () => {
     const model = { fields: { name: { type: 'string' } } };
     const store = createBlinxStore([{ name: 'A' }], model);
