@@ -25,7 +25,12 @@ jobs:
         run: npm ci
 
       - name: Run Jest unit tests
-        run: npm run test:ci
+        run: npm run test:ci:coverage
+
+      - name: Add coverage summary
+        if: always()
+        run: |
+          node -e "const fs=require('fs'); const p='coverage/coverage-summary.json'; if(!fs.existsSync(p)){ console.log('No coverage summary found at', p); process.exit(0);} const s=JSON.parse(fs.readFileSync(p,'utf8')).total; const pct=v=> (v && typeof v.pct==='number') ? v.pct : 0; const md=[ '## Jest coverage', '', '| Metric | % | Covered / Total |', '|---|---:|---:|', `| Lines | ${pct(s.lines)} | ${s.lines.covered} / ${s.lines.total} |`, `| Statements | ${pct(s.statements)} | ${s.statements.covered} / ${s.statements.total} |`, `| Functions | ${pct(s.functions)} | ${s.functions.covered} / ${s.functions.total} |`, `| Branches | ${pct(s.branches)} | ${s.branches.covered} / ${s.branches.total} |`, '' ].join('\\n'); fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, md);"
 
       - name: Upload JUnit report
         if: always()
@@ -33,4 +38,12 @@ jobs:
         with:
           name: jest-junit-report
           path: reports/junit/jest-junit.xml
+          if-no-files-found: ignore
+
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: jest-coverage-report
+          path: coverage
           if-no-files-found: ignore

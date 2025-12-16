@@ -13,4 +13,6 @@ module.exports = {
     }],
   ],
   collectCoverageFrom: ['lib/**/*.js', 'model/**/*.js'],
+  coverageDirectory: 'coverage',
+  coverageReporters: ['text-summary', 'lcov', 'html', 'json-summary'],
 };
