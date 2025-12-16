@@ -4,7 +4,9 @@
   "private": true,
   "scripts": {
     "test": "jest --runInBand",
-    "test:ci": "jest --ci --runInBand"
+    "test:ci": "jest --ci --runInBand",
+    "test:coverage": "jest --runInBand --coverage",
+    "test:ci:coverage": "jest --ci --runInBand --coverage"
   },
   "devDependencies": {
     "@babel/core": "^7.26.0",
