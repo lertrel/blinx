@@ -15,6 +15,7 @@ test.describe('demo/basic-model.html', () => {
 
     const recordIndicator = page.locator('#record-indicator');
     const saveStatus = page.locator('#save-status');
+    const tblStatus = page.locator('#tbl-status');
 
     // Form: initial record indicator.
     await expect(recordIndicator).toHaveText('Record 1 of 3');
@@ -46,6 +47,7 @@ test.describe('demo/basic-model.html', () => {
     await page.locator('#btn-delete').click();
     await expect(saveStatus).toHaveText('Record deleted.');
     await expect(recordIndicator).toHaveText('Record 3 of 3');
+    await expect(tblStatus).toHaveText('Rows removed elsewhere; refreshed table.');
 
     // Table: should render rows/cols and allow selection + delete-selected.
     const tableRoot = page.locator('#table-container');
@@ -65,7 +67,6 @@ test.describe('demo/basic-model.html', () => {
     await expect(tableRoot.locator('span', { hasText: 'Page:' })).toHaveText('Page: 1');
 
     // Table: delete selected with nothing selected should show an error status.
-    const tblStatus = page.locator('#tbl-status');
     await page.locator('#tbl-delete-selected').click();
     await expect(tblStatus).toHaveText('No rows selected.');
 
