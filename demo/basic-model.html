@@ -34,18 +34,15 @@
   <script type="module">
     import { productModel, productFormView, productTableView, initialDataset } from '../model/product.model.js';
     import { blinxStore } from '../lib/blinx.store.js';
-    import { BlinxDefaultUI } from '../lib/blinx.adapters.default.js';
     import { blinxForm } from '../lib/blinx.form.js';
     import { blinxTable } from '../lib/blinx.table.js';
 
     const store = blinxStore(initialDataset, productModel);
-    const ui = new BlinxDefaultUI();
 
     const { formApi } = blinxForm({
       root: document.getElementById('form-container'),
       view: productFormView,
       store,
-      ui,
       recordIndex: 0,
       controls: {
         saveButtonId: 'btn-save',
@@ -63,7 +60,6 @@
       root: document.getElementById('table-container'),
       view: productTableView,
       store,
-      ui,
       pageSize: 10,
       onRowClick: (rowIndex) => formApi.setRecordIndex(rowIndex),
       controls: {

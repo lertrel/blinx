@@ -2,7 +2,6 @@
 
 import { blinxStore } from '../lib/blinx.store.js';
 import { blinxForm } from '../lib/blinx.form.js';
-import { BlinxDefaultUI } from '../lib/blinx.adapters.default.js';
 
 function setupDomControls(ids) {
   document.body.innerHTML = '';
@@ -22,14 +21,13 @@ describe('blinxForm', () => {
   test('throws when store is missing getModel() or model.fields', () => {
     const root = document.createElement('div');
 
-    expect(() => blinxForm({ root, view: { sections: [] }, store: null, ui: {} }))
+    expect(() => blinxForm({ root, view: { sections: [] }, store: null }))
       .toThrow('blinxForm requires a store that exposes getModel().');
 
     expect(() => blinxForm({
       root,
       view: { sections: [] },
       store: { getModel: () => ({}) },
-      ui: {},
     })).toThrow('blinxForm requires the store model to define fields.');
   });
 
@@ -42,7 +40,6 @@ describe('blinxForm', () => {
     };
 
     const store = blinxStore([{ name: 'AA', price: 1 }], model);
-    const ui = new BlinxDefaultUI();
     const view = { sections: [{ title: 'Main', columns: 2, fields: ['name', 'price'] }] };
 
     const root = document.createElement('div');
@@ -62,7 +59,6 @@ describe('blinxForm', () => {
       root,
       view,
       store,
-      ui,
       recordIndex: 0,
       controls: {
         saveButtonId: 'save',
@@ -107,7 +103,6 @@ describe('blinxForm', () => {
       }
     };
 
-    const ui = new BlinxDefaultUI();
     const view = { sections: [{ title: 'Main', columns: 2, fields: ['name', 'price'] }] };
 
     setupDomControls({
@@ -126,7 +121,6 @@ describe('blinxForm', () => {
       root,
       view,
       store: storeInvalid,
-      ui,
       controls: {
         saveButtonId: 'save',
         saveStatusId: 'status',
@@ -148,7 +142,6 @@ describe('blinxForm', () => {
       root,
       view,
       store: storeNoChanges,
-      ui,
       controls: {
         saveButtonId: 'save',
         saveStatusId: 'status',
@@ -180,7 +173,6 @@ describe('blinxForm', () => {
       fields: { name: { type: 'string', required: true, length: { min: 2 } } }
     };
     const store = blinxStore([{ name: 'AA' }], model);
-    const ui = new BlinxDefaultUI();
     const view = { sections: [{ title: 'Main', columns: 2, fields: ['name'] }] };
 
     setupDomControls({
@@ -194,7 +186,6 @@ describe('blinxForm', () => {
       root,
       view,
       store,
-      ui,
       controls: {
         saveStatusId: 'status',
         recordIndicatorId: 'indicator',
