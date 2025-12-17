@@ -1,8 +1,7 @@
 /** @jest-environment jsdom */
 
-import { createBlinxStore } from '../lib/blinx.store.js';
-import { renderBlinxCollection } from '../lib/blinx.collection.js';
-import { BlinxDefaultAdapter } from '../lib/blinx.adapters.default.js';
+import { blinxStore } from '../lib/blinx.store.js';
+import { blinxCollection } from '../lib/blinx.collection.js';
 
 function setupButtons(ids = {}) {
   document.body.innerHTML = '';
@@ -14,18 +13,29 @@ function setupButtons(ids = {}) {
   }
 }
 
-describe('renderBlinxCollection', () => {
+describe('blinxCollection', () => {
+  test('does not accept legacy ui parameter', () => {
+    const model = { fields: { name: { type: 'string' } } };
+    const store = blinxStore([{ name: 'A' }], model);
+    const root = document.createElement('div');
+
+    expect(() => blinxCollection({
+      root,
+      store,
+      view: { layout: 'table', columns: [{ field: 'name', label: 'Name' }] },
+      ui: { any: 'thing' },
+    })).toThrow('does not accept a ui parameter');
+  });
+
   test('renders built-in table layout and supports onItemClick', () => {
     const model = { fields: { name: { type: 'string' } } };
-    const store = createBlinxStore([{ name: 'A' }, { name: 'B' }], model);
-    const ui = new BlinxDefaultAdapter();
+    const store = blinxStore([{ name: 'A' }, { name: 'B' }], model);
     const root = document.createElement('div');
     const onItemClick = jest.fn();
 
-    renderBlinxCollection({
+    blinxCollection({
       root,
       store,
-      ui,
       view: { layout: 'table', columns: [{ field: 'name', label: 'Name' }] },
       paging: { pageSize: 20 },
       onItemClick,
@@ -39,14 +49,12 @@ describe('renderBlinxCollection', () => {
 
   test('single selection mode refreshes UI so only one checkbox stays checked', () => {
     const model = { fields: { name: { type: 'string' } } };
-    const store = createBlinxStore([{ name: 'A' }, { name: 'B' }], model);
-    const ui = new BlinxDefaultAdapter();
+    const store = blinxStore([{ name: 'A' }, { name: 'B' }], model);
     const root = document.createElement('div');
 
-    renderBlinxCollection({
+    blinxCollection({
       root,
       store,
-      ui,
       view: { layout: 'table', columns: [{ field: 'name', label: 'Name' }] },
       paging: { pageSize: 20 },
       selection: { mode: 'single' },
@@ -72,8 +80,7 @@ describe('renderBlinxCollection', () => {
 
   test('supports custom layout registry via view.layout key', () => {
     const model = { fields: { name: { type: 'string' } } };
-    const store = createBlinxStore([{ name: 'A' }], model);
-    const ui = new BlinxDefaultAdapter();
+    const store = blinxStore([{ name: 'A' }], model);
     const root = document.createElement('div');
 
     const customLayout = {
@@ -90,10 +97,9 @@ describe('renderBlinxCollection', () => {
       }
     };
 
-    renderBlinxCollection({
+    blinxCollection({
       root,
       store,
-      ui,
       view: { layout: 'x-custom' },
       layouts: { 'x-custom': customLayout },
       paging: { pageSize: 20 },
@@ -106,16 +112,14 @@ describe('renderBlinxCollection', () => {
 
   test('create/deleteSelected actions + interceptors work via external controls', async () => {
     const model = { fields: { name: { type: 'string' } } };
-    const store = createBlinxStore([{ name: 'A' }], model);
-    const ui = new BlinxDefaultAdapter();
+    const store = blinxStore([{ name: 'A' }], model);
     const root = document.createElement('div');
 
     setupButtons({ createBtn: 'create', deleteBtn: 'del', status: 'status' });
 
-    const { api } = renderBlinxCollection({
+    const { api } = blinxCollection({
       root,
       store,
-      ui,
       view: { layout: 'table', columns: [{ field: 'name', label: 'Name' }] },
       paging: { pageSize: 20 },
       controls: {

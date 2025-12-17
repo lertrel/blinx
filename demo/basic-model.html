@@ -5,7 +5,7 @@
   <meta charset="utf-8" />
   <title>Blinx Demo</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="../css/style.css">
 </head>
 
 <body>
@@ -32,20 +32,17 @@
     </div>
   </div>
   <script type="module">
-    import { productModel, productFormView, productTableView, initialDataset } from './model/product.model.js';
-    import { createBlinxStore } from './lib/blinx.store.js';
-    import { BlinxDefaultAdapter } from './lib/blinx.adapters.default.js';
-    import { renderBlinxForm } from './lib/blinx.form.js';
-    import { renderBlinxTable } from './lib/blinx.table.js';
+    import { productModel, productFormView, productTableView, initialDataset } from '../model/product.model.js';
+    import { blinxStore } from '../lib/blinx.store.js';
+    import { blinxForm } from '../lib/blinx.form.js';
+    import { blinxTable } from '../lib/blinx.table.js';
 
-    const store = createBlinxStore(initialDataset, productModel);
-    const ui = new BlinxDefaultAdapter();
+    const store = blinxStore(initialDataset, productModel);
 
-    const { formApi } = renderBlinxForm({
+    const { formApi } = blinxForm({
       root: document.getElementById('form-container'),
       view: productFormView,
       store,
-      ui,
       recordIndex: 0,
       controls: {
         saveButtonId: 'btn-save',
@@ -59,11 +56,10 @@
       }
     });
 
-    const { tableApi } = renderBlinxTable({
+    const { tableApi } = blinxTable({
       root: document.getElementById('table-container'),
       view: productTableView,
       store,
-      ui,
       pageSize: 10,
       onRowClick: (rowIndex) => formApi.setRecordIndex(rowIndex),
       controls: {

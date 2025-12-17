@@ -1,8 +1,7 @@
 /** @jest-environment jsdom */
 
-import { createBlinxStore } from '../lib/blinx.store.js';
-import { renderBlinxForm } from '../lib/blinx.form.js';
-import { BlinxDefaultAdapter } from '../lib/blinx.adapters.default.js';
+import { blinxStore } from '../lib/blinx.store.js';
+import { blinxForm } from '../lib/blinx.form.js';
 
 function setupDomControls(ids) {
   document.body.innerHTML = '';
@@ -18,19 +17,18 @@ function getText(id) {
   return el ? el.textContent : null;
 }
 
-describe('renderBlinxForm', () => {
+describe('blinxForm', () => {
   test('throws when store is missing getModel() or model.fields', () => {
     const root = document.createElement('div');
 
-    expect(() => renderBlinxForm({ root, view: { sections: [] }, store: null, ui: {} }))
-      .toThrow('renderBlinxForm requires a store that exposes getModel().');
+    expect(() => blinxForm({ root, view: { sections: [] }, store: null }))
+      .toThrow('blinxForm requires a store that exposes getModel().');
 
-    expect(() => renderBlinxForm({
+    expect(() => blinxForm({
       root,
       view: { sections: [] },
       store: { getModel: () => ({}) },
-      ui: {},
-    })).toThrow('renderBlinxForm requires the store model to define fields.');
+    })).toThrow('blinxForm requires the store model to define fields.');
   });
 
   test('create/delete/next/prev update store and status', async () => {
@@ -41,8 +39,7 @@ describe('renderBlinxForm', () => {
       }
     };
 
-    const store = createBlinxStore([{ name: 'AA', price: 1 }], model);
-    const ui = new BlinxDefaultAdapter();
+    const store = blinxStore([{ name: 'AA', price: 1 }], model);
     const view = { sections: [{ title: 'Main', columns: 2, fields: ['name', 'price'] }] };
 
     const root = document.createElement('div');
@@ -58,11 +55,10 @@ describe('renderBlinxForm', () => {
       saveStatusId: 'status',
     });
 
-    renderBlinxForm({
+    blinxForm({
       root,
       view,
       store,
-      ui,
       recordIndex: 0,
       controls: {
         saveButtonId: 'save',
@@ -107,7 +103,6 @@ describe('renderBlinxForm', () => {
       }
     };
 
-    const ui = new BlinxDefaultAdapter();
     const view = { sections: [{ title: 'Main', columns: 2, fields: ['name', 'price'] }] };
 
     setupDomControls({
@@ -119,14 +114,13 @@ describe('renderBlinxForm', () => {
     const root = document.createElement('div');
 
     // Invalid record (name too short)
-    const storeInvalid = createBlinxStore([{ name: 'A', price: 1 }], model);
+    const storeInvalid = blinxStore([{ name: 'A', price: 1 }], model);
     const commitSpyInvalid = jest.spyOn(storeInvalid, 'commit');
 
-    renderBlinxForm({
+    blinxForm({
       root,
       view,
       store: storeInvalid,
-      ui,
       controls: {
         saveButtonId: 'save',
         saveStatusId: 'status',
@@ -141,14 +135,13 @@ describe('renderBlinxForm', () => {
     expect(commitSpyInvalid).not.toHaveBeenCalled();
 
     // Valid record: no changes
-    const storeNoChanges = createBlinxStore([{ name: 'AA', price: 1 }], model);
+    const storeNoChanges = blinxStore([{ name: 'AA', price: 1 }], model);
     const commitSpyNoChanges = jest.spyOn(storeNoChanges, 'commit');
 
-    renderBlinxForm({
+    blinxForm({
       root,
       view,
       store: storeNoChanges,
-      ui,
       controls: {
         saveButtonId: 'save',
         saveStatusId: 'status',
@@ -179,8 +172,7 @@ describe('renderBlinxForm', () => {
     const model = {
       fields: { name: { type: 'string', required: true, length: { min: 2 } } }
     };
-    const store = createBlinxStore([{ name: 'AA' }], model);
-    const ui = new BlinxDefaultAdapter();
+    const store = blinxStore([{ name: 'AA' }], model);
     const view = { sections: [{ title: 'Main', columns: 2, fields: ['name'] }] };
 
     setupDomControls({
@@ -190,11 +182,10 @@ describe('renderBlinxForm', () => {
 
     const root = document.createElement('div');
 
-    renderBlinxForm({
+    blinxForm({
       root,
       view,
       store,
-      ui,
       controls: {
         saveStatusId: 'status',
         recordIndicatorId: 'indicator',

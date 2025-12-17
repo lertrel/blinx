@@ -1,6 +1,6 @@
 /** @jest-environment jsdom */
 
-import { BlinxDefaultAdapter } from '../lib/blinx.adapters.default.js';
+import { BlinxDefaultUI } from '../lib/blinx.adapters.default.js';
 
 function createOnChangeSpy() {
   const calls = [];
@@ -9,9 +9,9 @@ function createOnChangeSpy() {
   return fn;
 }
 
-describe('BlinxDefaultAdapter', () => {
+describe('BlinxDefaultUI', () => {
   test('readValue: handles number/boolean/array/default', () => {
-    const a = new BlinxDefaultAdapter();
+    const a = new BlinxDefaultUI();
 
     const numberEl = document.createElement('input');
     numberEl.value = '';
@@ -34,7 +34,7 @@ describe('BlinxDefaultAdapter', () => {
   });
 
   test('formatCell: formats booleans, numbers, arrays, and defaults', () => {
-    const a = new BlinxDefaultAdapter();
+    const a = new BlinxDefaultUI();
 
     expect(a.formatCell(true, { type: 'boolean' })).toBe('Yes');
     expect(a.formatCell(false, { type: 'boolean' })).toBe('No');
@@ -51,7 +51,7 @@ describe('BlinxDefaultAdapter', () => {
   });
 
   test('createField: number input validates and shows errors on change/blur', () => {
-    const a = new BlinxDefaultAdapter();
+    const a = new BlinxDefaultUI();
     const onChange = createOnChangeSpy();
 
     const { el } = a.createField({
@@ -95,7 +95,7 @@ describe('BlinxDefaultAdapter', () => {
   });
 
   test('createField: boolean uses checkbox and calls onChange with checked', () => {
-    const a = new BlinxDefaultAdapter();
+    const a = new BlinxDefaultUI();
     const onChange = createOnChangeSpy();
 
     const { el } = a.createField({
@@ -115,7 +115,7 @@ describe('BlinxDefaultAdapter', () => {
   });
 
   test('createField: enum builds select options and calls onChange with selected value', () => {
-    const a = new BlinxDefaultAdapter();
+    const a = new BlinxDefaultUI();
     const onChange = createOnChangeSpy();
 
     const { el } = a.createField({

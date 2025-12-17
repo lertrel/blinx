@@ -1,8 +1,7 @@
 /** @jest-environment jsdom */
 
-import { createBlinxStore } from '../lib/blinx.store.js';
-import { renderBlinxTable } from '../lib/blinx.table.js';
-import { BlinxDefaultAdapter } from '../lib/blinx.adapters.default.js';
+import { blinxStore } from '../lib/blinx.store.js';
+import { blinxTable } from '../lib/blinx.table.js';
 
 function setupButtons({ createId, deleteSelectedId, statusId }) {
   document.body.innerHTML = '';
@@ -31,34 +30,31 @@ function getText(id) {
   return el ? el.textContent : null;
 }
 
-describe('renderBlinxTable', () => {
+describe('blinxTable', () => {
   test('throws when store is missing getModel() or model.fields', () => {
     const root = document.createElement('div');
 
-    expect(() => renderBlinxTable({ root, view: { columns: [] }, store: null, ui: {} }))
-      .toThrow('renderBlinxTable requires a store that exposes getModel().');
+    expect(() => blinxTable({ root, view: { columns: [] }, store: null }))
+      .toThrow('blinxTable requires a store that exposes getModel().');
 
-    expect(() => renderBlinxTable({
+    expect(() => blinxTable({
       root,
       view: { columns: [] },
       store: { getModel: () => ({}) },
-      ui: {},
-    })).toThrow('renderBlinxTable requires the store model to define fields.');
+    })).toThrow('blinxTable requires the store model to define fields.');
   });
 
   test('renders rows and calls onRowClick when clicking row (not checkbox)', () => {
     const model = { fields: { name: { type: 'string' } } };
-    const store = createBlinxStore([{ name: 'A' }, { name: 'B' }], model);
-    const ui = new BlinxDefaultAdapter();
+    const store = blinxStore([{ name: 'A' }, { name: 'B' }], model);
 
     const root = document.createElement('div');
     const onRowClick = jest.fn();
 
-    renderBlinxTable({
+    blinxTable({
       root,
       view: { columns: [{ field: 'name', label: 'Name' }] },
       store,
-      ui,
       onRowClick,
       pageSize: 20,
     });
@@ -77,18 +73,16 @@ describe('renderBlinxTable', () => {
 
   test('create/deleteSelected buttons update store and status; delete requires selection', async () => {
     const model = { fields: { name: { type: 'string' } } };
-    const store = createBlinxStore([{ name: 'A' }, { name: 'B' }], model);
-    const ui = new BlinxDefaultAdapter();
+    const store = blinxStore([{ name: 'A' }, { name: 'B' }], model);
 
     setupButtons({ createId: 'create', deleteSelectedId: 'del', statusId: 'status' });
 
     const root = document.createElement('div');
 
-    renderBlinxTable({
+    blinxTable({
       root,
       view: { columns: [{ field: 'name', label: 'Name' }] },
       store,
-      ui,
       pageSize: 20,
       controls: {
         createButtonId: 'create',
@@ -121,18 +115,16 @@ describe('renderBlinxTable', () => {
 
   test('interceptors can prevent execution by not calling proceed()', async () => {
     const model = { fields: { name: { type: 'string' } } };
-    const store = createBlinxStore([{ name: 'A' }], model);
-    const ui = new BlinxDefaultAdapter();
+    const store = blinxStore([{ name: 'A' }], model);
 
     setupButtons({ createId: 'create', statusId: 'status' });
 
     const root = document.createElement('div');
 
-    const { tableApi } = renderBlinxTable({
+    const { tableApi } = blinxTable({
       root,
       view: { columns: [{ field: 'name', label: 'Name' }] },
       store,
-      ui,
       pageSize: 20,
       controls: {
         createButtonId: 'create',
@@ -155,18 +147,16 @@ describe('renderBlinxTable', () => {
     jest.useFakeTimers();
 
     const model = { fields: { name: { type: 'string' } } };
-    const store = createBlinxStore([{ name: 'A' }], model);
-    const ui = new BlinxDefaultAdapter();
+    const store = blinxStore([{ name: 'A' }], model);
 
     setupButtons({ statusId: 'status' });
 
     const root = document.createElement('div');
 
-    renderBlinxTable({
+    blinxTable({
       root,
       view: { columns: [{ field: 'name', label: 'Name' }] },
       store,
-      ui,
       pageSize: 20,
       controls: {
         statusId: 'status',
