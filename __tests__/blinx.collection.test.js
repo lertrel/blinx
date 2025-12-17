@@ -14,6 +14,19 @@ function setupButtons(ids = {}) {
 }
 
 describe('blinxCollection', () => {
+  test('does not accept legacy ui parameter', () => {
+    const model = { fields: { name: { type: 'string' } } };
+    const store = blinxStore([{ name: 'A' }], model);
+    const root = document.createElement('div');
+
+    expect(() => blinxCollection({
+      root,
+      store,
+      view: { layout: 'table', columns: [{ field: 'name', label: 'Name' }] },
+      ui: { any: 'thing' },
+    })).toThrow('does not accept a ui parameter');
+  });
+
   test('renders built-in table layout and supports onItemClick', () => {
     const model = { fields: { name: { type: 'string' } } };
     const store = blinxStore([{ name: 'A' }, { name: 'B' }], model);
