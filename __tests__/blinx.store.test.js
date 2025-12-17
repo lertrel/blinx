@@ -1,8 +1,8 @@
-import { createBlinxStore, EventTypes } from '../lib/blinx.store.js';
+import { blinxStore, EventTypes } from '../lib/blinx.store.js';
 
-describe('createBlinxStore', () => {
+describe('blinxStore', () => {
   test('tracks updates and additions via diff()', () => {
-    const store = createBlinxStore(
+    const store = blinxStore(
       [{ id: 1, name: 'Alpha' }],
       { id: 'number', name: 'string' },
     );
@@ -19,7 +19,7 @@ describe('createBlinxStore', () => {
   });
 
   test('removeRecords deduplicates indexes and emits a single event', () => {
-    const store = createBlinxStore(
+    const store = blinxStore(
       [
         { id: 10, name: 'First' },
         { id: 20, name: 'Second' },
@@ -46,14 +46,14 @@ describe('createBlinxStore', () => {
   });
 
   test('toJSON returns a deep clone', () => {
-    const store = createBlinxStore([{ id: 1, meta: { a: 1 } }], {});
+    const store = blinxStore([{ id: 1, meta: { a: 1 } }], {});
     const snapshot = store.toJSON();
     snapshot[0].meta.a = 999;
     expect(store.getRecord(0).meta.a).toBe(1);
   });
 
   test('subscribe returns an unsubscribe function', () => {
-    const store = createBlinxStore([{ id: 1 }], {});
+    const store = blinxStore([{ id: 1 }], {});
     const events = [];
     const unsubscribe = store.subscribe(ev => events.push(ev));
 
@@ -66,7 +66,7 @@ describe('createBlinxStore', () => {
   });
 
   test('addRecord inserts at index and emits add event', () => {
-    const store = createBlinxStore([{ id: 1 }, { id: 3 }], {});
+    const store = blinxStore([{ id: 1 }, { id: 3 }], {});
     const events = [];
     store.subscribe(ev => events.push(ev));
 
@@ -81,7 +81,7 @@ describe('createBlinxStore', () => {
   });
 
   test('removeRecords ignores invalid indexes and emits no event when nothing removed', () => {
-    const store = createBlinxStore([{ id: 1 }], {});
+    const store = blinxStore([{ id: 1 }], {});
     const events = [];
     store.subscribe(ev => events.push(ev));
 
@@ -91,7 +91,7 @@ describe('createBlinxStore', () => {
   });
 
   test('updateIndex returns null when out of bounds, otherwise notifies and returns record', () => {
-    const store = createBlinxStore([{ id: 1 }], {});
+    const store = blinxStore([{ id: 1 }], {});
     const events = [];
     store.subscribe(ev => events.push(ev));
 
@@ -106,7 +106,7 @@ describe('createBlinxStore', () => {
   });
 
   test('update returns null when out of bounds, otherwise replaces record and notifies', () => {
-    const store = createBlinxStore([{ id: 1 }], {});
+    const store = blinxStore([{ id: 1 }], {});
     const events = [];
     store.subscribe(ev => events.push(ev));
 
@@ -123,7 +123,7 @@ describe('createBlinxStore', () => {
   });
 
   test('commit snapshots current, clears diff, and emits commit event', () => {
-    const store = createBlinxStore([{ id: 1, name: 'A' }], {});
+    const store = blinxStore([{ id: 1, name: 'A' }], {});
     const events = [];
     store.subscribe(ev => events.push(ev));
 
@@ -140,7 +140,7 @@ describe('createBlinxStore', () => {
   });
 
   test('reset restores original snapshot and emits reset events for each record', () => {
-    const store = createBlinxStore([{ id: 1 }, { id: 2 }], {});
+    const store = blinxStore([{ id: 1 }, { id: 2 }], {});
     const events = [];
     store.subscribe(ev => events.push(ev));
 
@@ -159,7 +159,7 @@ describe('createBlinxStore', () => {
   });
 
   test('diff reports deletions by index', () => {
-    const store = createBlinxStore([{ id: 1 }, { id: 2 }], {});
+    const store = blinxStore([{ id: 1 }, { id: 2 }], {});
     store.commit();
     store.removeRecords([1]);
 
