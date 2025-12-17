@@ -2,7 +2,6 @@
 
 import { blinxStore } from '../lib/blinx.store.js';
 import { blinxTable } from '../lib/blinx.table.js';
-import { BlinxDefaultUI } from '../lib/blinx.adapters.default.js';
 
 function setupButtons({ createId, deleteSelectedId, statusId }) {
   document.body.innerHTML = '';
@@ -35,21 +34,19 @@ describe('blinxTable', () => {
   test('throws when store is missing getModel() or model.fields', () => {
     const root = document.createElement('div');
 
-    expect(() => blinxTable({ root, view: { columns: [] }, store: null, ui: {} }))
+    expect(() => blinxTable({ root, view: { columns: [] }, store: null }))
       .toThrow('blinxTable requires a store that exposes getModel().');
 
     expect(() => blinxTable({
       root,
       view: { columns: [] },
       store: { getModel: () => ({}) },
-      ui: {},
     })).toThrow('blinxTable requires the store model to define fields.');
   });
 
   test('renders rows and calls onRowClick when clicking row (not checkbox)', () => {
     const model = { fields: { name: { type: 'string' } } };
     const store = blinxStore([{ name: 'A' }, { name: 'B' }], model);
-    const ui = new BlinxDefaultUI();
 
     const root = document.createElement('div');
     const onRowClick = jest.fn();
@@ -58,7 +55,6 @@ describe('blinxTable', () => {
       root,
       view: { columns: [{ field: 'name', label: 'Name' }] },
       store,
-      ui,
       onRowClick,
       pageSize: 20,
     });
@@ -78,7 +74,6 @@ describe('blinxTable', () => {
   test('create/deleteSelected buttons update store and status; delete requires selection', async () => {
     const model = { fields: { name: { type: 'string' } } };
     const store = blinxStore([{ name: 'A' }, { name: 'B' }], model);
-    const ui = new BlinxDefaultUI();
 
     setupButtons({ createId: 'create', deleteSelectedId: 'del', statusId: 'status' });
 
@@ -88,7 +83,6 @@ describe('blinxTable', () => {
       root,
       view: { columns: [{ field: 'name', label: 'Name' }] },
       store,
-      ui,
       pageSize: 20,
       controls: {
         createButtonId: 'create',
@@ -122,7 +116,6 @@ describe('blinxTable', () => {
   test('interceptors can prevent execution by not calling proceed()', async () => {
     const model = { fields: { name: { type: 'string' } } };
     const store = blinxStore([{ name: 'A' }], model);
-    const ui = new BlinxDefaultUI();
 
     setupButtons({ createId: 'create', statusId: 'status' });
 
@@ -132,7 +125,6 @@ describe('blinxTable', () => {
       root,
       view: { columns: [{ field: 'name', label: 'Name' }] },
       store,
-      ui,
       pageSize: 20,
       controls: {
         createButtonId: 'create',
@@ -156,7 +148,6 @@ describe('blinxTable', () => {
 
     const model = { fields: { name: { type: 'string' } } };
     const store = blinxStore([{ name: 'A' }], model);
-    const ui = new BlinxDefaultUI();
 
     setupButtons({ statusId: 'status' });
 
@@ -166,7 +157,6 @@ describe('blinxTable', () => {
       root,
       view: { columns: [{ field: 'name', label: 'Name' }] },
       store,
-      ui,
       pageSize: 20,
       controls: {
         statusId: 'status',
