@@ -136,5 +136,30 @@ describe('BlinxArrayDataSource', () => {
       expect.objectContaining({ opId: 'd404', status: 'rejected', error: expect.objectContaining({ code: 'not_found' }) }),
     ]));
   });
+
+  test('mutate(): batch deletes do not use stale array indices (regression)', async () => {
+    const ds = new BlinxArrayDataSource(
+      [
+        { id: 1, version: '1' },
+        { id: 2, version: '1' },
+        { id: 3, version: '1' },
+        { id: 4, version: '1' },
+      ],
+      { entityType: 'Product', keyField: 'id', versionField: 'version' }
+    );
+
+    const res = await ds.mutate([
+      // If implementation incorrectly uses cached indices, the second delete can remove the wrong row after the first splice.
+      { opId: 'd1', type: 'delete', entity: { type: 'Product', id: 1 }, baseVersion: '1' },
+      { opId: 'd3', type: 'delete', entity: { type: 'Product', id: 3 }, baseVersion: '1' },
+    ]);
+
+    expect(res.rejected).toEqual([]);
+    expect(res.conflicts).toEqual([]);
+    expect(res.applied.map(a => a.opId)).toEqual(['d1', 'd3']);
+
+    const after = await ds.query({ resource: 'products', entityType: 'Product', page: { mode: 'page', page: 0, limit: 10 } });
+    expect(after.result.map(x => x.id)).toEqual(['2', '4']);
+  });
 });
 
