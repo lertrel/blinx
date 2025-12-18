@@ -1,0 +1,97 @@
+import { blinxStore } from '../lib/blinx.store.js';
+
+describe('blinxStore save() re-queue behavior', () => {
+  test('does not re-queue already-applied ops when some ops are rejected (regression)', async () => {
+    const calls = [];
+
+    const dataSource = {
+      init() {},
+      async query() {
+        return { entities: { Product: [] }, result: [], pageInfo: { totalCount: 0 } };
+      },
+      async mutate(ops) {
+        calls.push(ops.map(o => o.opId));
+        if (ops.length <= 1) {
+          return { applied: [{ opId: ops[0].opId, status: 'applied' }], rejected: [], conflicts: [], entities: {} };
+        }
+        // Apply only the first op, reject the rest.
+        return {
+          applied: [{ opId: ops[0].opId, status: 'applied' }],
+          rejected: ops.slice(1).map(o => ({ opId: o.opId, status: 'rejected', error: { code: 'x', message: 'fail' } })),
+          conflicts: [],
+          entities: {},
+        };
+      },
+    };
+
+    const store = blinxStore({
+      model: { fields: {} },
+      dataSource,
+      view: { name: 'products', resource: 'products', entityType: 'Product', keyField: 'id', defaultPage: { mode: 'page', page: 0, limit: 10 } },
+    });
+
+    // Queue two creates.
+    store.addRecord({ name: 'A' });
+    store.addRecord({ name: 'B' });
+
+    const first = await store.save();
+    expect(first.applied.length).toBe(1);
+    expect(first.rejected.length).toBe(1);
+    expect(calls.length).toBe(1);
+    expect(calls[0].length).toBe(2);
+
+    // Second save should retry ONLY the rejected op (not both).
+    const second = await store.save();
+    expect(second.applied.length).toBe(1);
+    expect(second.rejected.length).toBe(0);
+    expect(calls.length).toBe(2);
+    expect(calls[1]).toEqual([calls[0][1]]);
+  });
+
+  test('re-queues all ops when mutate() throws (transport error) (regression)', async () => {
+    const calls = [];
+    let shouldThrow = true;
+
+    const dataSource = {
+      init() {},
+      async query() {
+        return { entities: { Product: [] }, result: [], pageInfo: { totalCount: 0 } };
+      },
+      async mutate(ops) {
+        calls.push(ops.map(o => o.opId));
+        if (shouldThrow) {
+          shouldThrow = false;
+          throw new Error('network down');
+        }
+        return {
+          applied: ops.map(o => ({ opId: o.opId, status: 'applied' })),
+          rejected: [],
+          conflicts: [],
+          entities: {},
+        };
+      },
+    };
+
+    const store = blinxStore({
+      model: { fields: {} },
+      dataSource,
+      view: { name: 'products', resource: 'products', entityType: 'Product', keyField: 'id', defaultPage: { mode: 'page', page: 0, limit: 10 } },
+    });
+
+    // Queue two creates (so we can detect if ops are lost).
+    store.addRecord({ name: 'A' });
+    store.addRecord({ name: 'B' });
+
+    await expect(store.save()).rejects.toThrow('network down');
+    expect(calls.length).toBe(1);
+    expect(calls[0].length).toBe(2);
+
+    // Second save should retry the same ops (proves they were restored after the exception).
+    const res = await store.save();
+    expect(res.rejected || []).toEqual([]);
+    expect(res.conflicts || []).toEqual([]);
+    expect(calls.length).toBe(2);
+    expect(calls[1]).toEqual(calls[0]);
+  });
+});
+
