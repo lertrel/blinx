@@ -98,6 +98,40 @@ describe('BlinxRestDataSource', () => {
     expect(res.entities.Product[0]).toEqual(expect.objectContaining({ id: '1', name: 'B', version: '"v2"' }));
   });
 
+  test('mutate(update): when server returns primitive JSON body (e.g. \"OK\"), datasource still returns an object entity (never a primitive)', async () => {
+    const fetchCalls = [];
+    const fetch = async (url, init) => {
+      fetchCalls.push({ url, init });
+      return makeResponse({
+        status: 200,
+        headers: { etag: '"v2"' },
+        json: 'OK',
+      });
+    };
+
+    const ds = new BlinxRestDataSource({ baseUrl: 'https://api.test', fetch });
+    ds.init({ defaults: { entityType: 'Product', keyField: 'id', versionField: 'version' } });
+
+    const res = await ds.mutate([
+      { opId: 'u1', type: 'update', entity: { type: 'Product', id: '1' }, patch: { name: 'B' }, baseVersion: '"v1"' }
+    ], { resource: 'products', entityType: 'Product', keyField: 'id', versionField: 'version' });
+
+    expect(fetchCalls.length).toBe(1);
+    expect(res.applied.map(a => a.opId)).toEqual(['u1']);
+    expect(res.rejected).toEqual([]);
+    expect(res.conflicts).toEqual([]);
+
+    expect(res.entities.Product.length).toBe(1);
+    // Critical: entity must be an object, even if server returned a primitive.
+    // Current behavior: ignore primitive response body and fall back to payload + ETag-derived version.
+    expect(typeof res.entities.Product[0]).toBe('object');
+    expect(res.entities.Product[0]).toEqual(expect.objectContaining({
+      id: '1',
+      name: 'B',
+      version: '"v2"',
+    }));
+  });
+
   test('mutate(update): maps 412 to conflict and fetches latest record for conflict payload', async () => {
     const fetchCalls = [];
     const fetch = async (url, init) => {
