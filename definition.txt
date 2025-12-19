@@ -197,7 +197,7 @@ Enouch with scratch book, ...
 - In old version ui.validate.js has this below line too, why blinx.validate.js does not have it? Is it no longer needed?:    
 if (def.pattern && !new RegExp(def.pattern).test(value)) errors.push('Invalid format.');
 - Is runtime.js no longer needed?
-[2512100125 DONE] Externalize CSS in demo/basic-model.html to improve readability by using   <link rel="stylesheet" href="../css/style.css">
+[2512100125 DONE] Externalize CSS in demo/basic-model/basic-model.html to improve readability by using   <link rel="stylesheet" href="css/style.css">
 
 [2512102223 EPIC] STORE SHOULD BE MODEL AWARED RATHER THAN PLAIN ARRAY OF JSON FOR PROMOTING FUTURE VALIDATION
 - [2512102224 DONE] When creating a new store, data model should be provided as an additional parameter

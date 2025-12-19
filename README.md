@@ -35,7 +35,7 @@ What ships today:
              └─ Headless UI / Radix UI adapters
 ```
 
-1. **Model** (`model/product.model.js`) describes fields, datatypes, constraints, and defaults.
+1. **Demo model** (`demo/basic-model/model/product.model.js`) describes fields, datatypes, constraints, and defaults.
 2. **View descriptors** outline sections, column layouts, and visibility rules.
 3. **Store** (`lib/blinx.store.js`) hydrates model + dataset, exposes mutation APIs, and emits granular events.
 4. **UI adapters** (`lib/blinx.form.js`, `lib/blinx.table.js`, or customs) build DOM widgets using model + view metadata.

@@ -12,7 +12,7 @@ module.exports = {
       ancestorSeparator: ' › ',
     }],
   ],
-  collectCoverageFrom: ['lib/**/*.js', 'model/**/*.js'],
+  collectCoverageFrom: ['lib/**/*.js'],
   coverageDirectory: 'coverage',
   coverageReporters: ['text-summary', 'lcov', 'html', 'json-summary'],
 };

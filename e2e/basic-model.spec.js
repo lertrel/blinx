@@ -1,8 +1,8 @@
 const { test, expect } = require('@playwright/test');
 
-test.describe('demo/basic-model.html', () => {
+test.describe('demo/basic-model/basic-model.html', () => {
   test('Form + Table controls work end-to-end', async ({ page }) => {
-    await page.goto('/demo/basic-model.html');
+    await page.goto('/demo/basic-model/basic-model.html');
 
     // Smoke: page loads and base UI is present.
     await expect(page.getByRole('heading', { name: /Blinx: Model/i })).toBeVisible();

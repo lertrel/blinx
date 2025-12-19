@@ -1,6 +1,6 @@
-<testsuites id="" name="" tests="1" failures="0" skipped="0" errors="0" time="2.941985">
-<testsuite name="basic-model.spec.js" timestamp="2025-12-17T09:48:12.904Z" hostname="" tests="1" failures="0" skipped="0" time="0.823" errors="0">
-<testcase name="demo/basic-model.html › Form + Table controls work end-to-end" classname="basic-model.spec.js" time="0.823">
+<testsuites id="" name="" tests="1" failures="0" skipped="0" errors="0" time="2.0560370000000003">
+<testsuite name="basic-model.spec.js" timestamp="2025-12-19T18:40:09.010Z" hostname="" tests="1" failures="0" skipped="0" time="0.866" errors="0">
+<testcase name="demo/basic-model/basic-model.html › Form + Table controls work end-to-end" classname="basic-model.spec.js" time="0.866">
 </testcase>
 </testsuite>
 </testsuites>
