@@ -123,6 +123,54 @@ This layering keeps validation, diffing, and messaging logic reusable while adap
 - Interceptor pattern for every action with access to state, controls, and `proceed()`.
 - Event-driven UI refresh so actions stay slim and predictable.
 
+## Remote Data (REST) with `BlinxRestDataSource`
+
+For real-world apps, Blinx can run in “remote mode” where the store loads pages via `query()` and persists edits via `mutate()` on a data source implementation.
+
+This repo includes `BlinxRestDataSource`, a fetch-based adapter that:
+
+- Maps store `baseVersion` → HTTP `If-Match` for optimistic concurrency.
+- Reads `ETag` → stores it as the record `versionField` (default `version`).
+- Translates `409 Conflict` / `412 Precondition Failed` into `conflicts[]` and fetches the latest server record for conflict payloads.
+- Throws on transport failures so the store can fully re-queue pending ops and retry later.
+
+### Example
+
+```js
+import { blinxStore, BlinxRestDataSource } from './lib/blinx.store.js';
+
+const ds = new BlinxRestDataSource({
+  baseUrl: 'https://api.example.com',
+  headers: { Authorization: `Bearer ${token}` },
+});
+
+const store = blinxStore({
+  model: { fields: { id: {}, name: {}, version: {} } },
+  dataSource: ds,
+  view: {
+    name: 'products',
+    resource: 'products',
+    entityType: 'Product',
+    keyField: 'id',
+    versionField: 'version',
+    defaultPage: { mode: 'page', page: 0, limit: 20 },
+  },
+});
+
+await store.loadFirst();
+store.setField(0, 'name', 'New name');
+
+const saveRes = await store.save();
+if ((saveRes.conflicts || []).length) {
+  // Present conflict UI or refresh and re-apply edits.
+}
+```
+
+### Notes on conflict handling
+
+- If your server supports `ETag` + `If-Match`, Blinx can safely detect stale updates.
+- On conflict, `store.save()` returns `{ conflicts: [...] }` and keeps failed ops queued; callers can decide whether to refresh (`loadFirst`) or resolve conflicts via UI.
+
 ## Future Enhancements
 
 - Conditional display rules baked into the view schema.

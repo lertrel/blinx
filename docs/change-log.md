@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented here.
 
+## [Unreleased]
+- Added `BlinxRestDataSource` for HTTP-backed query/mutate to support client-server applications.
+- Store now passes view context to `dataSource.query/mutate` and reconciles server-assigned IDs for creates.
+- Added thorough REST unit tests (If-Match/ETag, 409/412 conflicts with latest fetch, multi-op batches, and transport failure behavior).
+
 ## [0.3.0] - 2025-12-11
 - Added formal design notes under `docs/design-notes.md` to capture architectural decisions and future bets.
 - Documented change history to improve onboarding for new contributors.

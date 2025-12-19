@@ -60,6 +60,15 @@ describe('BlinxRestDataSource', () => {
     expect(res.entities.Product[0].version).toBeDefined();
   });
 
+  test('query(): throws on non-2xx HTTP responses (does not silently return empty data)', async () => {
+    const fetch = async () => makeResponse({ status: 500, json: { message: 'server down' } });
+
+    const ds = new BlinxRestDataSource({ baseUrl: 'https://api.test', fetch });
+    ds.init({ defaults: { entityType: 'Product', keyField: 'id', versionField: 'version' } });
+
+    await expect(ds.query({ resource: 'products', entityType: 'Product' })).rejects.toThrow('server down');
+  });
+
   test('mutate(update): sends If-Match from baseVersion and returns canonical entity with ETag as version', async () => {
     const fetchCalls = [];
     const fetch = async (url, init) => {

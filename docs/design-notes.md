@@ -45,6 +45,31 @@ This layering lets us swap adapters (Tailwind, Chakra, Headless UI) without rewr
 - **View schema**: Sections/columns can be expanded with conditional visibility, spans, custom renderers.
 - **Store subscribe**: External listeners can sync with remote APIs, websockets, or optimistic UI flows.
 
+## Remote data layer (client-server)
+
+In “remote mode”, the store delegates reads and writes to a `BlinxDataSource` implementation:
+
+- **`query(querySpec)`** returns `{ entities, result, pageInfo }`
+  - `entities` is a normalized entity bag (`{ [entityType]: record[] }`).
+  - `result` is an array of `{ type, id }` references that describe which entities are in the page.
+  - `pageInfo` carries pagination metadata (`totalCount` and optional cursor info).
+
+- **`mutate(ops)`** returns `{ applied, rejected, conflicts, entities }`
+  - `applied[]` acknowledges which opIds were successfully persisted (and may include `serverId` for creates).
+  - `rejected[]` is for definitive failures (validation, not-found, permissions).
+  - `conflicts[]` is for optimistic concurrency failures.
+  - `entities` may return canonical server records (new version, computed fields, etc.).
+
+### Optimistic concurrency: `baseVersion` as an opaque token
+
+The store uses `versionField` from the last committed snapshot as `baseVersion` for update/delete ops.
+
+REST implementations should treat `baseVersion` as opaque and map it to standard HTTP concurrency:
+
+- Server returns `ETag` on reads and successful writes.
+- Client sends `If-Match: <etag>` on update/delete.
+- Server returns `409/412` on stale writes; clients fetch latest and surface `{ server, local, latestVersion }` for resolution.
+
 ## Non-Goals (for now)
 - Server-side rendering (SSR) — current focus is client-first experiences.
 - Real-time collaboration — store emits events locally only.
