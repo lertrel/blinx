@@ -69,6 +69,28 @@ describe('BlinxRestDataSource', () => {
     await expect(ds.query({ resource: 'products', entityType: 'Product' })).rejects.toThrow('server down');
   });
 
+  test('query(): when server returns primitive items, datasource wraps them (never pushes primitives into entities)', async () => {
+    const fetch = async () => makeResponse({
+      status: 200,
+      headers: { etag: '"v1"' },
+      json: ['OK'],
+    });
+
+    const ds = new BlinxRestDataSource({ baseUrl: 'https://api.test', fetch });
+    ds.init({ defaults: { entityType: 'Product', keyField: 'id', versionField: 'version' } });
+
+    const res = await ds.query({ resource: 'products', entityType: 'Product', page: { mode: 'page', page: 0, limit: 10 } });
+
+    expect(res.result).toEqual([{ type: 'Product', id: '0' }]);
+    expect(res.entities.Product.length).toBe(1);
+    expect(typeof res.entities.Product[0]).toBe('object');
+    expect(res.entities.Product[0]).toEqual(expect.objectContaining({
+      id: '0',
+      value: 'OK',
+      version: '"v1"',
+    }));
+  });
+
   test('mutate(update): sends If-Match from baseVersion and returns canonical entity with ETag as version', async () => {
     const fetchCalls = [];
     const fetch = async (url, init) => {
