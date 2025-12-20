@@ -172,4 +172,22 @@ describe('blinxTable', () => {
 
     jest.useRealTimers();
   });
+
+  test('controls: {} suppresses the default toolbar (but still renders table rows)', () => {
+    const model = { fields: { name: { type: 'string' } } };
+    const store = blinxStore([{ name: 'A' }, { name: 'B' }], model);
+    const root = document.createElement('div');
+
+    blinxTable({
+      root,
+      view: { columns: [{ field: 'name', label: 'Name' }] },
+      store,
+      pageSize: 20,
+      controls: {},
+    });
+
+    expect(root.querySelector('.blinx-controls')).toBeNull();
+    expect(root.querySelector('table')).not.toBeNull();
+    expect(root.querySelectorAll('tbody tr').length).toBe(2);
+  });
 });

@@ -294,4 +294,21 @@ describe('blinxForm', () => {
     expect(getText('status')).toBe('No changes to save.');
     expect(getText('indicator')).toBe('Record 1 of 1');
   });
+
+  test('controls: {} suppresses the default toolbar (but still renders form content)', () => {
+    const model = {
+      fields: { name: { type: 'string', required: true, length: { min: 2 } } }
+    };
+    const store = blinxStore([{ name: 'AA' }], model);
+    const view = { sections: [{ title: 'Main', columns: 2, fields: ['name'] }] };
+    const root = document.createElement('div');
+
+    blinxForm({ root, view, store, recordIndex: 0, controls: {} });
+
+    // Explicit empty controls means "no auto controls".
+    expect(root.querySelector('.blinx-controls')).toBeNull();
+    // But content should still render.
+    expect(root.querySelector('input, textarea, select')).not.toBeNull();
+    expect(root.querySelectorAll('button').length).toBe(0);
+  });
 });

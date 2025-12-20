@@ -153,5 +153,26 @@ describe('blinxCollection', () => {
     await Promise.resolve();
     expect(store.getLength()).toBe(1);
   });
+
+  test('controls: {} suppresses the default toolbar (but still renders collection content)', () => {
+    const model = { fields: { name: { type: 'string' } } };
+    const store = blinxStore([{ name: 'A' }, { name: 'B' }], model);
+    const root = document.createElement('div');
+
+    blinxCollection({
+      root,
+      store,
+      view: { layout: 'table', columns: [{ field: 'name', label: 'Name' }] },
+      paging: { pageSize: 20 },
+      controls: {},
+    });
+
+    expect(root.querySelector('.blinx-controls')).toBeNull();
+    expect(root.querySelector('table')).not.toBeNull();
+    expect(root.querySelectorAll('tbody tr').length).toBe(2);
+    expect(root.textContent).not.toContain('Prev');
+    expect(root.textContent).not.toContain('Next');
+    expect(root.textContent).not.toContain('Page:');
+  });
 });
 
