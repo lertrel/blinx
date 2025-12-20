@@ -1,6 +1,0 @@
-<testsuites id="" name="" tests="1" failures="0" skipped="0" errors="0" time="2.178926">
-<testsuite name="basic-model.spec.js" timestamp="2025-12-19T19:15:03.195Z" hostname="" tests="1" failures="0" skipped="0" time="0.898" errors="0">
-<testcase name="demo/basic-model/basic-model.html › Form + Table controls work end-to-end" classname="basic-model.spec.js" time="0.898">
-</testcase>
-</testsuite>
-</testsuites>

@@ -40,6 +40,10 @@ export const productTableView = {
     { field: 'releaseDate', label: 'Release Date' },
   ],
   controls: {
+    // Pager is intentionally auto-rendered inside #table-container (used by E2E).
+    prevButton: true,
+    nextButton: true,
+    pageLabel: true,
     createButton: 'tbl-create',
     deleteSelectedButton: 'tbl-delete-selected',
     status: 'tbl-status',
