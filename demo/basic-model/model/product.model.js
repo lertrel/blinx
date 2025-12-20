@@ -17,6 +17,17 @@ export const productModel = {
 
 export const productFormView = {
   sections: [{ title: 'General', columns: 2, fields: ['id', 'name', 'price', 'active', 'category', 'releaseDate', 'tags'] }],
+  // Declarative controls: bind to DOM by id (no boilerplate in blinxForm call)
+  controls: {
+    saveButton: 'btn-save',
+    resetButton: 'btn-reset',
+    nextButton: 'btn-next',
+    prevButton: 'btn-prev',
+    createButton: 'btn-create',
+    deleteButton: 'btn-delete',
+    recordIndicator: 'record-indicator',
+    saveStatus: 'save-status',
+  },
 };
 
 export const productTableView = {
