@@ -85,9 +85,9 @@ describe('blinxTable', () => {
       store,
       pageSize: 20,
       controls: {
-        createButtonId: 'create',
-        deleteSelectedButtonId: 'del',
-        statusId: 'status',
+        createButton: 'create',
+        deleteSelectedButton: 'del',
+        status: 'status',
       }
     });
 
@@ -127,8 +127,8 @@ describe('blinxTable', () => {
       store,
       pageSize: 20,
       controls: {
-        createButtonId: 'create',
-        statusId: 'status',
+        createButton: 'create',
+        status: 'status',
       }
     });
 
@@ -159,7 +159,7 @@ describe('blinxTable', () => {
       store,
       pageSize: 20,
       controls: {
-        statusId: 'status',
+        status: 'status',
       }
     });
 

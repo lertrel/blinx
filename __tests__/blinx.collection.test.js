@@ -123,9 +123,9 @@ describe('blinxCollection', () => {
       view: { layout: 'table', columns: [{ field: 'name', label: 'Name' }] },
       paging: { pageSize: 20 },
       controls: {
-        createButtonId: 'create',
-        deleteSelectedButtonId: 'del',
-        statusId: 'status',
+        createButton: 'create',
+        deleteSelectedButton: 'del',
+        status: 'status',
       }
     });
 

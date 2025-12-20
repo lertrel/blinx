@@ -6,7 +6,9 @@ import { blinxForm } from '../lib/blinx.form.js';
 function setupDomControls(ids) {
   document.body.innerHTML = '';
   for (const [key, id] of Object.entries(ids)) {
-    const el = (key.includes('Indicator') || key.includes('Status')) ? document.createElement('div') : document.createElement('button');
+    const el = (key.includes('indicator') || key.includes('status') || key.includes('Indicator') || key.includes('Status'))
+      ? document.createElement('div')
+      : document.createElement('button');
     el.id = id;
     document.body.appendChild(el);
   }
@@ -45,14 +47,14 @@ describe('blinxForm', () => {
     const root = document.createElement('div');
 
     setupDomControls({
-      saveButtonId: 'save',
-      resetButtonId: 'reset',
-      nextButtonId: 'next',
-      prevButtonId: 'prev',
-      createButtonId: 'create',
-      deleteButtonId: 'delete',
-      recordIndicatorId: 'indicator',
-      saveStatusId: 'status',
+      save: 'save',
+      reset: 'reset',
+      next: 'next',
+      prev: 'prev',
+      create: 'create',
+      delete: 'delete',
+      indicator: 'indicator',
+      status: 'status',
     });
 
     blinxForm({
@@ -61,15 +63,15 @@ describe('blinxForm', () => {
       store,
       recordIndex: 0,
       controls: {
-        saveButtonId: 'save',
-        resetButtonId: 'reset',
-        nextButtonId: 'next',
-        prevButtonId: 'prev',
-        createButtonId: 'create',
-        deleteButtonId: 'delete',
-        recordIndicatorId: 'indicator',
-        saveStatusId: 'status',
-      }
+        saveButton: 'save',
+        resetButton: 'reset',
+        nextButton: 'next',
+        prevButton: 'prev',
+        createButton: 'create',
+        deleteButton: 'delete',
+        recordIndicator: 'indicator',
+        saveStatus: 'status',
+      },
     });
 
     expect(getText('indicator')).toBe('Record 1 of 1');
@@ -106,9 +108,9 @@ describe('blinxForm', () => {
     const view = { sections: [{ title: 'Main', columns: 2, fields: ['name', 'price'] }] };
 
     setupDomControls({
-      saveButtonId: 'save',
-      saveStatusId: 'status',
-      recordIndicatorId: 'indicator',
+      save: 'save',
+      status: 'status',
+      indicator: 'indicator',
     });
 
     const root = document.createElement('div');
@@ -122,10 +124,10 @@ describe('blinxForm', () => {
       view,
       store: storeInvalid,
       controls: {
-        saveButtonId: 'save',
-        saveStatusId: 'status',
-        recordIndicatorId: 'indicator',
-      }
+        saveButton: 'save',
+        saveStatus: 'status',
+        recordIndicator: 'indicator',
+      },
     });
 
     document.getElementById('save').click();
@@ -143,10 +145,10 @@ describe('blinxForm', () => {
       view,
       store: storeNoChanges,
       controls: {
-        saveButtonId: 'save',
-        saveStatusId: 'status',
-        recordIndicatorId: 'indicator',
-      }
+        saveButton: 'save',
+        saveStatus: 'status',
+        recordIndicator: 'indicator',
+      },
     });
 
     document.getElementById('save').click();
@@ -176,8 +178,8 @@ describe('blinxForm', () => {
     const view = { sections: [{ title: 'Main', columns: 2, fields: ['name'] }] };
 
     setupDomControls({
-      saveStatusId: 'status',
-      recordIndicatorId: 'indicator',
+      status: 'status',
+      indicator: 'indicator',
     });
 
     const root = document.createElement('div');
@@ -187,9 +189,9 @@ describe('blinxForm', () => {
       view,
       store,
       controls: {
-        saveStatusId: 'status',
-        recordIndicatorId: 'indicator',
-      }
+        saveStatus: 'status',
+        recordIndicator: 'indicator',
+      },
     });
 
     store.updateIndex(0);

@@ -39,6 +39,11 @@ export const productTableView = {
     { field: 'category', label: 'Category' },
     { field: 'releaseDate', label: 'Release Date' },
   ],
+  controls: {
+    createButton: 'tbl-create',
+    deleteSelectedButton: 'tbl-delete-selected',
+    status: 'tbl-status',
+  },
 };
 
 export const initialDataset = [
