@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * Minimal static server for Blinx demos.
- * Serves repository root so demo HTML can import ../lib, ../model, ../css, etc.
+ * Serves repository root so demo HTML can import ../../lib and local demo assets.
  */
 const http = require('http');
 const fs = require('fs');
@@ -42,7 +42,7 @@ const server = http.createServer((req, res) => {
     const u = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
     let p = u.pathname || '/';
 
-    if (p === '/') p = '/demo/basic-model.html';
+    if (p === '/') p = '/demo/basic-model/basic-model.html';
     const filePath = safeResolve(p);
     if (!filePath) {
       res.writeHead(400, { 'Content-Type': 'text/plain; charset=utf-8' });

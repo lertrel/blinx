@@ -1,5 +1,5 @@
 
-import { DataTypes } from '../lib/blinx.store.js';
+import { DataTypes } from '../../../lib/blinx.store.js';
 
 export const productModel = {
   entity: 'Product',

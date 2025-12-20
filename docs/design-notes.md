@@ -4,7 +4,7 @@
 Blinx is a model-driven UI framework that renders forms and tables from a shared schema. The goal is to keep the core headless and let lightweight adapters provide the actual DOM widgets, which keeps the rendering fast, predictable, and adaptable to any design system.
 
 ## Core Data Flow
-1. **Model** (`model/product.model.js`) defines field metadata (type, constraints, defaults).
+1. **Demo model** (`demo/basic-model/model/product.model.js`) defines field metadata (type, constraints, defaults).
 2. **View descriptions** feed the renderer sections/columns and layout preferences.
 3. **Store** (`lib/blinx.store.js`) hydrates the model + dataset, exposes mutation APIs, and emits granular events.
 4. **UI adapters** (`lib/blinx.form.js`, `lib/blinx.table.js`, and adapter helpers) consume both the model and view to create actual DOM nodes.
