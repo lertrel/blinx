@@ -125,5 +125,63 @@ describe('Nested UI views (Option A registry) (integration)', () => {
     expect(shippingRoot.textContent).toContain('zip');
     expect(shippingRoot.textContent).not.toContain('country');
   });
+
+  test('nested collection item edits do not overwrite each other (no stale closure)', () => {
+    const ItemModel = {
+      id: 'Item',
+      fields: {
+        sku: { type: 'string' },
+        qty: { type: 'number' },
+      },
+    };
+
+    const OrderModel = {
+      id: 'Order2',
+      fields: {
+        items: { type: 'collection', model: ItemModel },
+      },
+    };
+
+    registerModelViews(ItemModel, {
+      form: { default: { sections: [{ title: 'Item', columns: 2, fields: ['sku', 'qty'] }] } },
+    });
+
+    registerModelViews(OrderModel, {
+      form: { default: { sections: [{ title: 'Order', columns: 1, fields: ['items'] }] } },
+    });
+
+    const store = blinxStore([{
+      items: [
+        { sku: 'A', qty: 1 },
+        { sku: 'B', qty: 2 },
+      ],
+    }], OrderModel);
+
+    const root = document.createElement('div');
+    blinxForm({ root, store });
+
+    const itemsRoot = root.querySelector('[data-blinx-field="items"]');
+    expect(itemsRoot).toBeTruthy();
+
+    const item0 = itemsRoot.querySelector('[data-blinx-item-index="0"]');
+    const item1 = itemsRoot.querySelector('[data-blinx-item-index="1"]');
+    expect(item0).toBeTruthy();
+    expect(item1).toBeTruthy();
+
+    const sku0 = item0.querySelector('input'); // first field is sku
+    const sku1 = item1.querySelector('input');
+    expect(sku0).toBeTruthy();
+    expect(sku1).toBeTruthy();
+
+    sku0.value = 'A-EDIT';
+    sku0.dispatchEvent(new Event('change', { bubbles: true }));
+
+    sku1.value = 'B-EDIT';
+    sku1.dispatchEvent(new Event('change', { bubbles: true }));
+
+    const rec = store.getRecord(0);
+    expect(rec.items[0].sku).toBe('A-EDIT');
+    expect(rec.items[1].sku).toBe('B-EDIT');
+  });
 });
 
