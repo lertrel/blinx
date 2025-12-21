@@ -174,5 +174,36 @@ describe('blinxCollection', () => {
     expect(root.textContent).not.toContain('Next');
     expect(root.textContent).not.toContain('Page:');
   });
+
+  test('toolbar renders after content in both auto and declarative modes', () => {
+    const model = { fields: { name: { type: 'string' } } };
+    const store = blinxStore([{ name: 'A' }, { name: 'B' }], model);
+
+    // Auto mode: controls omitted => default toolbar created.
+    const rootAuto = document.createElement('div');
+    blinxCollection({
+      root: rootAuto,
+      store,
+      view: { layout: 'table', columns: [{ field: 'name', label: 'Name' }] },
+      paging: { pageSize: 20 },
+    });
+    expect(rootAuto.firstElementChild?.classList.contains('blinx-collection__content')).toBe(true);
+    expect(rootAuto.lastElementChild?.classList.contains('blinx-controls')).toBe(true);
+
+    // Declarative mode: some controls declared => toolbar created, should still be after content.
+    const rootDecl = document.createElement('div');
+    blinxCollection({
+      root: rootDecl,
+      store,
+      view: {
+        layout: 'table',
+        columns: [{ field: 'name', label: 'Name' }],
+        controls: { prevButton: true },
+      },
+      paging: { pageSize: 20 },
+    });
+    expect(rootDecl.firstElementChild?.classList.contains('blinx-collection__content')).toBe(true);
+    expect(rootDecl.lastElementChild?.classList.contains('blinx-controls')).toBe(true);
+  });
 });
 
