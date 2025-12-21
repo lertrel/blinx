@@ -55,7 +55,7 @@ This layering keeps validation, diffing, and messaging logic reusable while adap
 - Sections render into a `DocumentFragment`, then flush to the DOM in one pass to minimize layout thrash.
 - Fields delegate to the active adapter through `ui.createField(...)`, which returns `{ el, ... }` so widgets can manage their own lifecycle.
 - Navigation (`Next/Prev`) is purely index-driven; the form rebinds itself whenever the selected record changes.
-- Indicator and status nodes stay optional and are wired up through injected `controls`, letting integrators map them to any markup.
+- Controls can be declared on the UI view (`view.controls`) or passed to `blinxForm({ controls })`. If controls are omitted, Blinx auto-renders an opinionated default toolbar.
 - Interceptors wrap every command, receiving a `processor` object with state, DOM references, and an idempotent `proceed()` so middleware chains cannot double-run defaults.
 
 ### Default Form Controls
@@ -66,7 +66,7 @@ This layering keeps validation, diffing, and messaging logic reusable while adap
 
 ## Table Rendering
 
-- Client-side pagination (default page size 20) maintains a shared `page` pointer and updates Prev/Next controls.
+- Client-side pagination (default page size 20) maintains a shared `page` pointer and updates Prev/Next controls (when declared, or when controls are omitted and auto-rendered).
 - Checkbox selection tracks row indexes inside a `Set`. Interceptors can read `processor.state.selected` before destructive actions.
 - `ui.formatCell(value, fieldDef)` lets adapters decide how to visualize primitives (chips, currency, badges, etc.).
 - The table subscribes to store events and rebuilds the visible page whenever the dataset mutates.

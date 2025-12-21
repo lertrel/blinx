@@ -6,7 +6,9 @@ import { blinxForm } from '../lib/blinx.form.js';
 function setupDomControls(ids) {
   document.body.innerHTML = '';
   for (const [key, id] of Object.entries(ids)) {
-    const el = (key.includes('Indicator') || key.includes('Status')) ? document.createElement('div') : document.createElement('button');
+    const el = (key.includes('indicator') || key.includes('status') || key.includes('Indicator') || key.includes('Status'))
+      ? document.createElement('div')
+      : document.createElement('button');
     el.id = id;
     document.body.appendChild(el);
   }
@@ -45,14 +47,14 @@ describe('blinxForm', () => {
     const root = document.createElement('div');
 
     setupDomControls({
-      saveButtonId: 'save',
-      resetButtonId: 'reset',
-      nextButtonId: 'next',
-      prevButtonId: 'prev',
-      createButtonId: 'create',
-      deleteButtonId: 'delete',
-      recordIndicatorId: 'indicator',
-      saveStatusId: 'status',
+      save: 'save',
+      reset: 'reset',
+      next: 'next',
+      prev: 'prev',
+      create: 'create',
+      delete: 'delete',
+      indicator: 'indicator',
+      status: 'status',
     });
 
     blinxForm({
@@ -61,15 +63,15 @@ describe('blinxForm', () => {
       store,
       recordIndex: 0,
       controls: {
-        saveButtonId: 'save',
-        resetButtonId: 'reset',
-        nextButtonId: 'next',
-        prevButtonId: 'prev',
-        createButtonId: 'create',
-        deleteButtonId: 'delete',
-        recordIndicatorId: 'indicator',
-        saveStatusId: 'status',
-      }
+        saveButton: 'save',
+        resetButton: 'reset',
+        nextButton: 'next',
+        prevButton: 'prev',
+        createButton: 'create',
+        deleteButton: 'delete',
+        recordIndicator: 'indicator',
+        saveStatus: 'status',
+      },
     });
 
     expect(getText('indicator')).toBe('Record 1 of 1');
@@ -106,9 +108,9 @@ describe('blinxForm', () => {
     const view = { sections: [{ title: 'Main', columns: 2, fields: ['name', 'price'] }] };
 
     setupDomControls({
-      saveButtonId: 'save',
-      saveStatusId: 'status',
-      recordIndicatorId: 'indicator',
+      save: 'save',
+      status: 'status',
+      indicator: 'indicator',
     });
 
     const root = document.createElement('div');
@@ -122,10 +124,10 @@ describe('blinxForm', () => {
       view,
       store: storeInvalid,
       controls: {
-        saveButtonId: 'save',
-        saveStatusId: 'status',
-        recordIndicatorId: 'indicator',
-      }
+        saveButton: 'save',
+        saveStatus: 'status',
+        recordIndicator: 'indicator',
+      },
     });
 
     document.getElementById('save').click();
@@ -143,10 +145,10 @@ describe('blinxForm', () => {
       view,
       store: storeNoChanges,
       controls: {
-        saveButtonId: 'save',
-        saveStatusId: 'status',
-        recordIndicatorId: 'indicator',
-      }
+        saveButton: 'save',
+        saveStatus: 'status',
+        recordIndicator: 'indicator',
+      },
     });
 
     document.getElementById('save').click();
@@ -176,8 +178,8 @@ describe('blinxForm', () => {
     const view = { sections: [{ title: 'Main', columns: 2, fields: ['name'] }] };
 
     setupDomControls({
-      saveStatusId: 'status',
-      recordIndicatorId: 'indicator',
+      status: 'status',
+      indicator: 'indicator',
     });
 
     const root = document.createElement('div');
@@ -187,9 +189,9 @@ describe('blinxForm', () => {
       view,
       store,
       controls: {
-        saveStatusId: 'status',
-        recordIndicatorId: 'indicator',
-      }
+        saveStatus: 'status',
+        recordIndicator: 'indicator',
+      },
     });
 
     store.updateIndex(0);
@@ -201,5 +203,112 @@ describe('blinxForm', () => {
     expect(getText('status')).toBe('Store reset elsewhere; refreshed view.');
 
     jest.useRealTimers();
+  });
+
+  test('when controls are omitted, renders an opinionated default toolbar inside root', async () => {
+    const model = {
+      fields: {
+        name: { type: 'string', required: true, length: { min: 2, max: 50 } },
+        price: { type: 'number', required: true, min: 0 },
+      }
+    };
+    const store = blinxStore([{ name: 'AA', price: 1 }], model);
+    const view = { sections: [{ title: 'Main', columns: 2, fields: ['name', 'price'] }] };
+    const root = document.createElement('div');
+
+    blinxForm({ root, view, store, recordIndex: 0 });
+
+    const toolbar = root.querySelector('.blinx-controls');
+    expect(toolbar).not.toBeNull();
+    expect(toolbar.querySelectorAll('button').length).toBe(6);
+
+    const indicator = Array.from(toolbar.querySelectorAll('span')).find(s => s.textContent.includes('Record') || s.textContent.includes('No records')) || null;
+    expect(indicator).not.toBeNull();
+
+    const btn = (label) => Array.from(toolbar.querySelectorAll('button')).find(b => b.textContent === label);
+    btn('Create').click();
+    await Promise.resolve();
+
+    expect(store.getLength()).toBe(2);
+    expect(toolbar.textContent).toContain('New record created.');
+
+    btn('Delete').click();
+    await Promise.resolve();
+
+    expect(store.getLength()).toBe(1);
+    expect(toolbar.textContent).toContain('Record deleted.');
+  });
+
+  test('declarative view.controls renders only explicitly mentioned controls', () => {
+    const model = {
+      fields: { name: { type: 'string', required: true, length: { min: 2 } } }
+    };
+    const store = blinxStore([{ name: 'AA' }], model);
+    const view = {
+      sections: [{ title: 'Main', columns: 2, fields: ['name'] }],
+      controls: {
+        saveButton: true,
+        saveStatus: true,
+      },
+    };
+    const root = document.createElement('div');
+
+    blinxForm({ root, view, store, recordIndex: 0 });
+
+    const toolbar = root.querySelector('.blinx-controls');
+    expect(toolbar).not.toBeNull();
+    expect(Array.from(toolbar.querySelectorAll('button')).map(b => b.textContent)).toEqual(['Save']);
+    // Status is declared, indicator is not.
+    expect(toolbar.querySelectorAll('span').length).toBe(1);
+  });
+
+  test('declarative view.controls can bind to external DOM elements by id (no controls option required)', async () => {
+    document.body.innerHTML = '';
+    const save = document.createElement('button'); save.id = 'save';
+    const status = document.createElement('div'); status.id = 'status';
+    const indicator = document.createElement('div'); indicator.id = 'indicator';
+    document.body.append(save, status, indicator);
+
+    const model = {
+      fields: { name: { type: 'string', required: true, length: { min: 2 } } }
+    };
+    const store = blinxStore([{ name: 'AA' }], model);
+    const view = {
+      sections: [{ title: 'Main', columns: 2, fields: ['name'] }],
+      controls: {
+        saveButton: 'save',
+        saveStatus: 'status',
+        recordIndicator: 'indicator',
+      },
+    };
+    const root = document.createElement('div');
+
+    blinxForm({ root, view, store, recordIndex: 0 });
+
+    // No internal toolbar should be created since controls were bound externally.
+    expect(root.querySelector('.blinx-controls')).toBeNull();
+
+    document.getElementById('save').click();
+    await Promise.resolve();
+
+    expect(getText('status')).toBe('No changes to save.');
+    expect(getText('indicator')).toBe('Record 1 of 1');
+  });
+
+  test('controls: {} suppresses the default toolbar (but still renders form content)', () => {
+    const model = {
+      fields: { name: { type: 'string', required: true, length: { min: 2 } } }
+    };
+    const store = blinxStore([{ name: 'AA' }], model);
+    const view = { sections: [{ title: 'Main', columns: 2, fields: ['name'] }] };
+    const root = document.createElement('div');
+
+    blinxForm({ root, view, store, recordIndex: 0, controls: {} });
+
+    // Explicit empty controls means "no auto controls".
+    expect(root.querySelector('.blinx-controls')).toBeNull();
+    // But content should still render.
+    expect(root.querySelector('input, textarea, select')).not.toBeNull();
+    expect(root.querySelectorAll('button').length).toBe(0);
   });
 });

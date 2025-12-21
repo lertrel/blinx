@@ -123,9 +123,9 @@ describe('blinxCollection', () => {
       view: { layout: 'table', columns: [{ field: 'name', label: 'Name' }] },
       paging: { pageSize: 20 },
       controls: {
-        createButtonId: 'create',
-        deleteSelectedButtonId: 'del',
-        statusId: 'status',
+        createButton: 'create',
+        deleteSelectedButton: 'del',
+        status: 'status',
       }
     });
 
@@ -152,6 +152,58 @@ describe('blinxCollection', () => {
     document.getElementById('del').click();
     await Promise.resolve();
     expect(store.getLength()).toBe(1);
+  });
+
+  test('controls: {} suppresses the default toolbar (but still renders collection content)', () => {
+    const model = { fields: { name: { type: 'string' } } };
+    const store = blinxStore([{ name: 'A' }, { name: 'B' }], model);
+    const root = document.createElement('div');
+
+    blinxCollection({
+      root,
+      store,
+      view: { layout: 'table', columns: [{ field: 'name', label: 'Name' }] },
+      paging: { pageSize: 20 },
+      controls: {},
+    });
+
+    expect(root.querySelector('.blinx-controls')).toBeNull();
+    expect(root.querySelector('table')).not.toBeNull();
+    expect(root.querySelectorAll('tbody tr').length).toBe(2);
+    expect(root.textContent).not.toContain('Prev');
+    expect(root.textContent).not.toContain('Next');
+    expect(root.textContent).not.toContain('Page:');
+  });
+
+  test('toolbar renders after content in both auto and declarative modes', () => {
+    const model = { fields: { name: { type: 'string' } } };
+    const store = blinxStore([{ name: 'A' }, { name: 'B' }], model);
+
+    // Auto mode: controls omitted => default toolbar created.
+    const rootAuto = document.createElement('div');
+    blinxCollection({
+      root: rootAuto,
+      store,
+      view: { layout: 'table', columns: [{ field: 'name', label: 'Name' }] },
+      paging: { pageSize: 20 },
+    });
+    expect(rootAuto.firstElementChild?.classList.contains('blinx-collection__content')).toBe(true);
+    expect(rootAuto.lastElementChild?.classList.contains('blinx-controls')).toBe(true);
+
+    // Declarative mode: some controls declared => toolbar created, should still be after content.
+    const rootDecl = document.createElement('div');
+    blinxCollection({
+      root: rootDecl,
+      store,
+      view: {
+        layout: 'table',
+        columns: [{ field: 'name', label: 'Name' }],
+        controls: { prevButton: true },
+      },
+      paging: { pageSize: 20 },
+    });
+    expect(rootDecl.firstElementChild?.classList.contains('blinx-collection__content')).toBe(true);
+    expect(rootDecl.lastElementChild?.classList.contains('blinx-controls')).toBe(true);
   });
 });
 

@@ -85,9 +85,9 @@ describe('blinxTable', () => {
       store,
       pageSize: 20,
       controls: {
-        createButtonId: 'create',
-        deleteSelectedButtonId: 'del',
-        statusId: 'status',
+        createButton: 'create',
+        deleteSelectedButton: 'del',
+        status: 'status',
       }
     });
 
@@ -127,8 +127,8 @@ describe('blinxTable', () => {
       store,
       pageSize: 20,
       controls: {
-        createButtonId: 'create',
-        statusId: 'status',
+        createButton: 'create',
+        status: 'status',
       }
     });
 
@@ -159,7 +159,7 @@ describe('blinxTable', () => {
       store,
       pageSize: 20,
       controls: {
-        statusId: 'status',
+        status: 'status',
       }
     });
 
@@ -171,5 +171,23 @@ describe('blinxTable', () => {
     expect(getText('status')).toBe('Store reset elsewhere; refreshed table.');
 
     jest.useRealTimers();
+  });
+
+  test('controls: {} suppresses the default toolbar (but still renders table rows)', () => {
+    const model = { fields: { name: { type: 'string' } } };
+    const store = blinxStore([{ name: 'A' }, { name: 'B' }], model);
+    const root = document.createElement('div');
+
+    blinxTable({
+      root,
+      view: { columns: [{ field: 'name', label: 'Name' }] },
+      store,
+      pageSize: 20,
+      controls: {},
+    });
+
+    expect(root.querySelector('.blinx-controls')).toBeNull();
+    expect(root.querySelector('table')).not.toBeNull();
+    expect(root.querySelectorAll('tbody tr').length).toBe(2);
   });
 });
