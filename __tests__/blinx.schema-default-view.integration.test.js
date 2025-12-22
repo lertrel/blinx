@@ -113,6 +113,30 @@ describe('schema-driven default UI view fallback', () => {
     expect(dump).toContain('"origin": "generated"');
   });
 
+  test('nested model without fields: does not fall through to "[object Object]" input', () => {
+    // Ensure non-strict mode (default) to exercise the previous fallthrough bug.
+    BlinxConfig.setDefaultViewGenerationEnabled(true);
+
+    const BadNestedModel = { id: 'BadNestedNoFields' }; // intentionally missing fields
+    const ParentModel = {
+      id: 'ParentBadNested',
+      fields: { nested: { type: 'model', model: BadNestedModel } },
+    };
+
+    const store = blinxStore([{ nested: { a: 1 } }], ParentModel);
+    const root = document.createElement('div');
+
+    blinxForm({
+      root,
+      store,
+      view: { sections: [{ title: 'Main', columns: 1, fields: ['nested'] }] },
+    });
+
+    // Previously, default adapter would render "[object Object]" as text in an input.
+    expect(root.textContent).not.toContain('[object Object]');
+    expect(root.querySelectorAll('label').length).toBe(0);
+  });
+
   test('strict mode: disables schema fallback and throws for missing views (top-level + nested)', () => {
     BlinxConfig.setDefaultViewGenerationEnabled(false);
 
