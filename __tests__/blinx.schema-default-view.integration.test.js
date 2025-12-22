@@ -68,5 +68,42 @@ describe('schema-driven default UI view fallback', () => {
     expect(out).toContain('"model": "ModelDump"');
     expect(out).toContain('"form"');
   });
+
+  test('nested model: resolveModelUIView schema fallback renders nested default view and marks origin', () => {
+    const AddressModel = {
+      id: 'Address',
+      fields: {
+        street: { type: DataTypes.string },
+        city: { type: DataTypes.string },
+        token: { type: DataTypes.secret }, // should be hidden by default
+      },
+    };
+    const ParentModel = {
+      id: 'Parent',
+      fields: {
+        name: { type: DataTypes.string },
+        address: { type: 'model', model: AddressModel },
+      },
+    };
+
+    const store = blinxStore([{ name: 'A', address: { street: '1st', city: 'X', token: 't' } }], ParentModel);
+    const root = document.createElement('div');
+
+    // Explicit parent view includes nested field; nested model has no registry views.
+    blinxForm({
+      root,
+      store,
+      view: { sections: [{ title: 'Main', columns: 1, fields: ['name', 'address'] }] },
+    });
+
+    const labels = Array.from(root.querySelectorAll('label')).map(el => el.textContent);
+    expect(labels).toContain('street');
+    expect(labels).toContain('city');
+    expect(labels).not.toContain('token');
+
+    const dump = blinxDump('ui-view');
+    expect(dump).toContain('"model": "Address"');
+    expect(dump).toContain('"origin": "generated"');
+  });
 });
 
