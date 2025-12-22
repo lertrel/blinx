@@ -4,8 +4,14 @@ import { blinxStore, DataTypes } from '../lib/blinx.store.js';
 import { blinxForm } from '../lib/blinx.form.js';
 import { blinxCollection } from '../lib/blinx.collection.js';
 import { blinxDump } from '../lib/blinx.dump.js';
+import { BlinxConfig } from '../lib/blinx.config.js';
 
 describe('schema-driven default UI view fallback', () => {
+  afterEach(() => {
+    // Reset global config for isolation between tests.
+    BlinxConfig.setDefaultViewGenerationEnabled(true);
+  });
+
   test('blinxForm: when no explicit view exists, generates a default form view from schema', () => {
     const model = {
       id: 'ModelX',
@@ -104,6 +110,27 @@ describe('schema-driven default UI view fallback', () => {
     const dump = blinxDump('ui-view');
     expect(dump).toContain('"model": "Address"');
     expect(dump).toContain('"origin": "generated"');
+  });
+
+  test('strict mode: disables schema fallback and throws for missing views (top-level + nested)', () => {
+    BlinxConfig.setDefaultViewGenerationEnabled(false);
+
+    const model = { id: 'StrictTop', fields: { name: { type: DataTypes.string } } };
+    const store = blinxStore([{ name: 'A' }], model);
+    const root = document.createElement('div');
+
+    expect(() => blinxForm({ root, store })).toThrow('blinxForm: unable to resolve ui view');
+
+    const Child = { id: 'StrictChild', fields: { street: { type: DataTypes.string } } };
+    const Parent = { id: 'StrictParent', fields: { child: { type: 'model', model: Child } } };
+    const store2 = blinxStore([{ child: { street: 'x' } }], Parent);
+    const root2 = document.createElement('div');
+
+    expect(() => blinxForm({
+      root: root2,
+      store: store2,
+      view: { sections: [{ title: 'Main', columns: 1, fields: ['child'] }] },
+    })).toThrow('strict mode: missing nested ui view');
   });
 });
 
