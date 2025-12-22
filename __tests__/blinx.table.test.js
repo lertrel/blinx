@@ -2,6 +2,7 @@
 
 import { blinxStore } from '../lib/blinx.store.js';
 import { blinxTable } from '../lib/blinx.table.js';
+import { registerModelViews } from '../lib/blinx.ui-views.js';
 
 function setupButtons({ createId, deleteSelectedId, statusId }) {
   document.body.innerHTML = '';
@@ -69,6 +70,23 @@ describe('blinxTable', () => {
     const cb = rows[0].querySelector('input[type="checkbox"]');
     cb.dispatchEvent(new MouseEvent('click', { bubbles: true }));
     expect(onRowClick).toHaveBeenCalledTimes(1);
+  });
+
+  test('enforces table layout even when view is a string', () => {
+    const model = { id: 'M-table', fields: { name: { type: 'string' } } };
+    registerModelViews(model, {
+      collection: {
+        cardsView: { layout: 'cards', item: { titleField: 'name' } },
+      },
+    });
+
+    const store = blinxStore([{ name: 'A' }], model);
+    const root = document.createElement('div');
+
+    blinxTable({ root, store, view: 'cardsView' });
+
+    // Should still render a <table> regardless of named view layout.
+    expect(root.querySelector('table')).toBeTruthy();
   });
 
   test('create/deleteSelected buttons update store and status; delete requires selection', async () => {
