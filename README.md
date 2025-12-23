@@ -218,6 +218,14 @@ if ((saveRes.conflicts || []).length) {
 - React/Chakra adapter for enterprise-grade UI.
 - Virtualized table rendering for very large datasets.
 
+## Roadmap
+
+- **MVP1**: Deliver a minimum workable headless, model-driven UI framework that renders forms and tables from a shared schema. ✅
+- **MVP2**: Better and more customizable layout and practical validation.
+- **MVP3**: Better renderer and components with Shoelace integration and custom HTML template.
+- **MVP4**: React integration.
+- **MVP5**: Workflow and compliant control / data privacy supports.
+
 ## Open Questions / Next Bets
 
 - Can adapter-level theming tokens keep Tailwind, Chakra, and other libraries aligned?
