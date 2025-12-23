@@ -122,6 +122,7 @@ This layering keeps validation, diffing, and messaging logic reusable while adap
 - Selection in the table for bulk delete.
 - Interceptor pattern for every action with access to state, controls, and `proceed()`.
 - Event-driven UI refresh so actions stay slim and predictable.
+- Conditional UI presentation via `present()`/`rowPresent` hooks (attrs-only, browser-enforced where possible).
 
 ## Remote Data (REST) with `BlinxRestDataSource`
 
@@ -173,7 +174,6 @@ if ((saveRes.conflicts || []).length) {
 
 ## Future Enhancements
 
-- Conditional display rules baked into the view schema.
 - Undo/Redo stack in the store.
 - Soft delete flows (mark inactive instead of removal).
 - Bulk create with prefilled values.
@@ -183,7 +183,6 @@ if ((saveRes.conflicts || []).length) {
 
 ## Open Questions / Next Bets
 
-- How should conditional visibility rules be declared so both form and table understand them?
 - Can adapter-level theming tokens keep Tailwind, Chakra, and other libraries aligned?
 - Should diff batching understand array moves (drag-and-drop) rather than treating them as delete+add pairs?
 
