@@ -134,4 +134,20 @@ describe('BlinxDefaultUI', () => {
     select.dispatchEvent(new Event('change'));
     expect(onChange.calls).toEqual([['A', []]]);
   });
+
+  test('createField: computed fields are rendered read-only/disabled', () => {
+    const a = new BlinxDefaultUI();
+    const onChange = createOnChangeSpy();
+
+    const { el } = a.createField({
+      fieldKey: 'total',
+      def: { type: 'number', computed: true },
+      value: 123,
+      onChange,
+    });
+
+    const input = el.querySelector('input');
+    expect(input).toBeTruthy();
+    expect(input.getAttribute('readonly')).toBe('true');
+  });
 });
