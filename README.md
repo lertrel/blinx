@@ -11,6 +11,7 @@ What ships today:
 - Field rendering driven by datatype, constraints, and view preferences (readonly, required, min/max, CSS hints).
 - Layout definitions that allow form grouping to evolve independently from the data model.
 - Client-side runtime with pagination, diff tracking, and interceptor hooks.
+- Specs: see `docs/spec/README.md` for the supported Model / Data View / UI View shapes.
 
 ## Core Goals
 
