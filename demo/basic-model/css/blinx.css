@@ -1,0 +1,407 @@
+/* =========================================================
+  INPUT TOKENS (override these)
+  ========================================================= */
+:root {
+ --brand: #888888;
+ /* state tuning */
+ --hover-mix: 15%;
+ --active-mix: 25%;
+ --disabled-opacity: 0.45;
+ /* layout */
+ --radius: 0.6rem;
+ --space: 1rem;
+}
+/* =========================================================
+  DERIVED TOKENS (theme boundary)
+  IMPORTANT: must exist on :root AND .theme
+  ========================================================= */
+:root,
+.theme {
+ --bg:      color-mix(in srgb, var(--brand), white 90%);
+ --surface: color-mix(in srgb, var(--brand), white 80%);
+ --primary: var(--brand);
+ --accent:  color-mix(in srgb, var(--brand), black 15%);
+ --text:    #111;
+ /* interaction colors */
+ --hover-bg:  color-mix(in srgb, var(--primary), black var(--hover-mix));
+ --active-bg: color-mix(in srgb, var(--primary), black var(--active-mix));
+ --focus-ring: color-mix(in srgb, var(--primary), white 60%);
+}
+/* =========================================================
+  DARK MODE (same tokens, redefined)
+  ========================================================= */
+@media (prefers-color-scheme: dark) {
+ :root,
+ .theme {
+   --bg:      color-mix(in srgb, var(--brand), black 85%);
+   --surface: color-mix(in srgb, var(--brand), black 70%);
+   --accent:  color-mix(in srgb, var(--brand), white 20%);
+   --text:    #f5f5f5;
+ }
+}
+/* =========================================================
+  BASE STYLES
+  ========================================================= */
+*,
+*::before,
+*::after {
+ box-sizing: border-box;
+}
+body {
+ margin: 0;
+ padding: var(--space);
+ background: var(--bg);
+ color: var(--text);
+ font-family: system-ui, -apple-system, Segoe UI, sans-serif;
+ line-height: 1.5;
+}
+/* =========================================================
+  COMPONENTS
+  ========================================================= */
+/* ---------- Surface / Card ---------- */
+.card {
+ background: var(--surface);
+ padding: calc(var(--space) * 1.25);
+ border-radius: var(--radius);
+ box-shadow: 0 10px 30px color-mix(in srgb, black, transparent 85%);
+}
+/* ---------- Buttons ---------- */
+.btn {
+ appearance: none;
+ border: none;
+ border-radius: var(--radius);
+ padding: 0.55rem 1rem;
+ font: inherit;
+ cursor: pointer;
+ transition: background 0.15s ease, opacity 0.15s ease;
+}
+/* Variants */
+.btn[data-variant="primary"] {
+ background: var(--primary);
+ color: white;
+}
+.btn[data-variant="surface"] {
+ background: var(--surface);
+ color: var(--text);
+}
+/* States */
+.btn:hover:not(:disabled) {
+ background: var(--hover-bg);
+}
+.btn:active:not(:disabled) {
+ background: var(--active-bg);
+}
+.btn:focus-visible {
+ outline: 3px solid var(--focus-ring);
+ outline-offset: 2px;
+}
+.btn:disabled,
+.btn[data-state~="disabled"] {
+ opacity: var(--disabled-opacity);
+ cursor: not-allowed;
+}
+/* ---------- Links ---------- */
+a {
+ color: var(--primary);
+ text-decoration: none;
+}
+a:hover {
+ color: var(--accent);
+}
+/* =========================================================
+  UTILITIES
+  ========================================================= */
+.stack > * + * {
+ margin-top: var(--space);
+}
+.row {
+ display: flex;
+ gap: 0.5rem;
+}
+
+
+
+
+/* =========================================================
+  EXTRA DERIVED TOKENS (keeps your theme boundary intact)
+  Must exist on :root AND .theme
+  ========================================================= */
+:root,
+.theme {
+  /* neutrals & borders */
+  --muted:  color-mix(in srgb, var(--text), transparent 40%);
+  --border: color-mix(in srgb, var(--primary), white 85%);
+  /* status (semantic fallbacks—customize if needed) */
+  --success: #10b981;
+  --warning: #f59e0b;
+  --danger:  #e53e3e;
+  /* elevation */
+  --shadow-sm: 0 2px 6px color-mix(in srgb, black, transparent 90%);
+  --shadow-md: 0 6px 20px color-mix(in srgb, black, transparent 85%);
+  --shadow-lg: 0 12px 40px color-mix(in srgb, black, transparent 80%);
+  /* breakpoints */
+  --bp-sm: 480px;
+  --bp-md: 768px;
+  --bp-lg: 1024px;
+  /* sizing scale */
+  --space-0_5: calc(var(--space) * 0.5);
+  --space-2:   calc(var(--space) * 2);
+}
+
+/* Dark-mode overrides for the new tokens (optional fine-tuning) */
+@media (prefers-color-scheme: dark) {
+  :root,
+  .theme {
+    --muted:  color-mix(in srgb, var(--text), transparent 55%);
+    --border: color-mix(in srgb, var(--primary), black 70%);
+    --shadow-sm: 0 2px 6px color-mix(in srgb, black, transparent 70%);
+    --shadow-md: 0 6px 20px color-mix(in srgb, black, transparent 65%);
+    --shadow-lg: 0 12px 40px color-mix(in srgb, black, transparent 60%);
+  }
+}
+
+/* Accessibility: respect reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; animation: none !important; }
+}
+
+/* =========================================================
+  LAYOUT: Grid
+  ========================================================= */
+.grid { display: grid; gap: var(--space-0_5); }
+.grid-cols-1 { grid-template-columns: repeat(1, minmax(0, 1fr)); }
+.grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.grid-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.grid-cols-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+
+/* Auto-fit with min column size (override via --min-col-size) */
+.grid-auto-fit { 
+  grid-template-columns: repeat(auto-fit, minmax(var(--min-col-size, 16rem), 1fr));
+}
+
+/* Responsive column utilities (escape ':' in class names) */
+@media (min-width: 480px) { /* sm */
+  .sm\:grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .sm\:grid-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+@media (min-width: 768px) { /* md */
+  .md\:grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .md\:grid-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .md\:grid-cols-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+@media (min-width: 1024px) { /* lg */
+  .lg\:grid-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .lg\:grid-cols-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+
+/* =========================================================
+  LAYOUT: Flex
+  ========================================================= */
+.flex { display: flex; gap: var(--space-0_5); align-items: center; }
+.inline-flex { display: inline-flex; }
+.items-start   { align-items: flex-start; }
+.items-center  { align-items: center; }
+.items-end     { align-items: flex-end; }
+.justify-start { justify-content: flex-start; }
+.justify-center{ justify-content: center; }
+.justify-end   { justify-content: flex-end; }
+.justify-between { justify-content: space-between; }
+.flex-wrap { flex-wrap: wrap; }
+
+/* =========================================================
+  VISIBILITY
+  ========================================================= */
+.hidden { display: none !important; }
+
+/* Screen-reader only (accessible 'hidden') */
+.sr-only {
+  position: absolute !important;
+  width: 1px !important; height: 1px !important;
+  padding: 0 !important; margin: -1px !important;
+  overflow: hidden !important; clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important; border: 0 !important;
+}
+
+/* =========================================================
+  TYPOGRAPHY
+  ========================================================= */
+.section-title {
+  margin-block: var(--space) var(--space-0_5);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--accent);
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 0.35rem;
+}
+.text-muted { color: var(--muted); }
+.text-sm    { font-size: 0.9rem; }
+.text-xs    { font-size: 0.8rem; }
+
+/* =========================================================
+  FORMS
+  ========================================================= */
+.label {
+  display: inline-block;
+  font-weight: 600;
+  margin-bottom: 0.35rem;
+  color: var(--text);
+}
+
+.input,
+.textarea,
+.select {
+  appearance: none;
+  width: 100%;
+  background: color-mix(in srgb, var(--surface), white 10%);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0.6rem 0.8rem;
+  box-shadow: var(--shadow-sm);
+  transition: box-shadow 140ms ease, border-color 140ms ease, background 140ms ease;
+}
+
+.textarea { min-height: 7rem; resize: vertical; }
+.select   { padding-right: 2rem; background-image: none; } /* keep neutral; add chevron via background if you want */
+
+.input::placeholder,
+.textarea::placeholder { color: var(--muted); }
+
+/* Focus & invalid states */
+.input:focus-visible,
+.textarea:focus-visible,
+.select:focus-visible {
+  outline: 3px solid var(--focus-ring);
+  outline-offset: 2px;
+  border-color: var(--focus-ring);
+  box-shadow: var(--shadow-md);
+}
+
+.input:invalid,
+.textarea:invalid,
+.select:invalid {
+  border-color: var(--danger);
+}
+
+/* Disabled */
+.input:disabled,
+.textarea:disabled,
+.select:disabled {
+  opacity: var(--disabled-opacity);
+  cursor: not-allowed;
+}
+
+/* Helper / error text */
+.helper { color: var(--muted); font-size: 0.85rem; margin-top: 0.35rem; }
+.error  { color: var(--danger); font-size: 0.8rem; margin-top: 4px; }
+
+/* Field wrapper (handy for error highlighting) */
+.field { display: grid; gap: 0.35rem; }
+.field[data-error="true"] .input,
+.field[data-error="true"] .textarea,
+.field[data-error="true"] .select { border-color: var(--danger); }
+
+/* =========================================================
+  TABLE
+  ========================================================= */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden; /* rounds thead corners */
+}
+
+thead th {
+  text-align: left;
+  font-weight: 600;
+  background: color-mix(in srgb, var(--primary), white 85%);
+  color: color-mix(in srgb, var(--text), transparent 15%);
+  padding: 0.75rem 0.9rem;
+  border-bottom: 1px solid var(--border);
+}
+
+tbody td {
+  padding: 0.7rem 0.9rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--border), transparent 30%);
+}
+
+/* Zebra + hover row */
+tbody tr:nth-child(even) { background: color-mix(in srgb, var(--surface), white 6%); }
+tbody tr:hover { background: color-mix(in srgb, var(--surface), white 12%); }
+
+/* Compact variation */
+.table-compact thead th, .table-compact tbody td { padding: 0.55rem 0.75rem; }
+
+/* =========================================================
+  BUTTON VARIANTS (extras)
+  ========================================================= */
+.btn[data-variant="outline"] {
+  background: transparent;
+  color: var(--primary);
+  border: 1px solid var(--border);
+}
+.btn[data-variant="ghost"] {
+  background: transparent;
+  color: var(--text);
+}
+
+/* Status badges & alerts (common UI) */
+.badge {
+  display: inline-block;
+  padding: 0.25rem 0.5rem;
+  border-radius: calc(var(--radius) / 1.5);
+  font-size: 0.75rem;
+  border: 1px solid var(--border);
+  background: color-mix(in srgb, var(--surface), white 8%);
+}
+.badge[data-variant="success"] { border-color: var(--success); color: var(--success); }
+.badge[data-variant="warning"] { border-color: var(--warning); color: var(--warning); }
+.badge[data-variant="danger"]  { border-color: var(--danger);  color: var(--danger);  }
+
+.alert {
+  display: grid;
+  grid-template-columns: 1.25rem 1fr;
+  gap: var(--space-0_5);
+  padding: var(--space-0_5) var(--space);
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: color-mix(in srgb, var(--surface), white 6%);
+}
+.alert[data-variant="success"] { border-color: var(--success); }
+.alert[data-variant="warning"] { border-color: var(--warning); }
+.alert[data-variant="danger"]  { border-color: var(--danger); }
+
+/* =========================================================
+  COMMON UTILITIES (spacing, size, radius, shadow, width)
+  ========================================================= */
+.container { max-width: 80rem; margin-inline: auto; padding-inline: var(--space); }
+.w-full { width: 100%; }
+
+.rounded      { border-radius: var(--radius); }
+.rounded-full { border-radius: 9999px; }
+
+.shadow-sm { box-shadow: var(--shadow-sm); }
+.shadow-md { box-shadow: var(--shadow-md); }
+.shadow-lg { box-shadow: var(--shadow-lg); }
+
+.m-0   { margin: 0 !important; }
+.mt-0  { margin-top: 0 !important; }
+.mt-1  { margin-top: var(--space-0_5) !important; }
+.mt-2  { margin-top: var(--space) !important; }
+.mt-3  { margin-top: var(--space-2) !important; }
+.mb-1  { margin-bottom: var(--space-0_5) !important; }
+.mb-2  { margin-bottom: var(--space) !important; }
+
+.p-0   { padding: 0 !important; }
+.p-1   { padding: var(--space-0_5) !important; }
+.p-2   { padding: var(--space) !important; }
+.p-3   { padding: var(--space-2) !important; }
+
+.py-1  { padding-block: var(--space-0_5) !important; }
+.py-2  { padding-block: var(--space) !important; }
+.px-1  { padding-inline: var(--space-0_5) !important; }
+.px-2  { padding-inline: var(--space) !important; }
