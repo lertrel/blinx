@@ -123,5 +123,47 @@ describe('computed fields', () => {
 
     expect(() => blinxStore([], model)).toThrow('dependency cycle');
   });
+
+  test('event payloads include computed fields consistently (legacy add, remote commit)', async () => {
+    const model = {
+      fields: {
+        price: { type: 'number' },
+        tax: { type: 'number' },
+        total: {
+          type: 'number',
+          computed: true,
+          dependsOn: ['price', 'tax'],
+          compute: (r) => r.price * (1 + r.tax),
+        },
+      },
+    };
+
+    // Legacy store: addRecord event should include computed value in payload.
+    const legacy = blinxStore([{ price: 10, tax: 0.1 }], model);
+    const legacyEvents = [];
+    legacy.subscribe(ev => legacyEvents.push(ev));
+    legacy.addRecord({ price: 20, tax: 0.2 });
+    const addEv = legacyEvents.find(e => e.path?.[0] === 'add');
+    expect(addEv).toBeDefined();
+    expect(addEv.value.total).toBe(24);
+
+    // Remote view store (using initialArray => BlinxArrayDataSource): commit event should include computed values.
+    const remote = blinxStore({
+      model,
+      initialArray: [{ id: 'r1', price: 10, tax: 0.1 }],
+      defaultView: 'items',
+      views: {
+        items: { resource: 'items', entityType: 'Record', keyField: 'id', versionField: 'version', defaultPage: { mode: 'page', page: 0, limit: 10 } },
+      },
+    });
+    const view = remote.collection('items');
+    await view.loadFirst();
+    const remoteEvents = [];
+    view.subscribe(ev => remoteEvents.push(ev));
+    view.commit();
+    const commitEv = remoteEvents.find(e => e.path?.[0] === 'commit');
+    expect(commitEv).toBeDefined();
+    expect(commitEv.value[0].total).toBe(11);
+  });
 });
 
