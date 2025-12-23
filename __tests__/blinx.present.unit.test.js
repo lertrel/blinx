@@ -18,6 +18,11 @@ describe('blinx.present: applyAttrs', () => {
     applyAttrs(input, { 'read-only': true });
     expect(input.readOnly).toBe(true);
     expect(input.hasAttribute('readonly')).toBe(true);
+
+    // Bug regression: removing 'read-only' must remove the readonly attribute (not 'read-only').
+    applyAttrs(input, { 'read-only': false });
+    expect(input.readOnly).toBe(false);
+    expect(input.hasAttribute('readonly')).toBe(false);
   });
 
   test('supports hidden + data-* attributes', () => {
