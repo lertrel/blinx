@@ -88,7 +88,13 @@
 
 /* Accessibility: respect reduced motion */
 @media (prefers-reduced-motion: reduce) {
-  * { transition: none !important; animation: none !important; }
+  /* Scoped: do not affect host app components outside Blinx theme roots. */
+  [data-blinx-theme] *,
+  [data-blinx-theme] *::before,
+  [data-blinx-theme] *::after {
+    transition: none !important;
+    animation: none !important;
+  }
 }
 
 /* =========================================================
