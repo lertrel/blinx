@@ -19,7 +19,7 @@
 ========================================================= */
 :root {
   /* Brand / accent seed */
-  --blx-brand: #888888;
+  --blx-brand: #EE0000;
 
   /* Interaction tuning */
   --blx-hover-mix: 15%;
@@ -35,15 +35,15 @@
   --blx-line-height: 1.5;
 
   /* Derived palette */
-  --blx-bg:      color-mix(in srgb, var(--blx-brand), white 90%);
-  --blx-surface: color-mix(in srgb, var(--blx-brand), white 80%);
+  --blx-bg:      color-mix(in srgb, var(--blx-brand), white 98%);
+  --blx-surface: color-mix(in srgb, var(--blx-brand), white 95%);
   --blx-primary: var(--blx-brand);
   --blx-accent:  color-mix(in srgb, var(--blx-brand), black 15%);
   --blx-text:    #111;
 
   /* Neutrals & borders */
   --blx-muted:  color-mix(in srgb, var(--blx-text), transparent 40%);
-  --blx-border: color-mix(in srgb, var(--blx-primary), white 85%);
+  --blx-border: color-mix(in srgb, var(--blx-brand), white 85%);
 
   /* Interaction colors */
   --blx-hover-bg:   color-mix(in srgb, var(--blx-primary), black var(--blx-hover-mix));
