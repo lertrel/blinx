@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Blinx Product Table – Role Policies</title>
+    <link rel="stylesheet" href="../../css/style.css" />
+    <style>
+      body { font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; margin: 0; padding: 2rem; background: #f7fafc; color: #1a202c; }
+      main { max-width: 960px; margin: 0 auto; background: #fff; padding: 2rem; border-radius: 12px; box-shadow: 0 10px 35px -15px rgba(15, 23, 42, .35); }
+      h1 { font-size: 1.75rem; margin-bottom: 1rem; }
+      .role-picker { display: flex; gap: 1rem; align-items: center; margin-bottom: 1.5rem; }
+      select { border: 1px solid #cbd5f5; border-radius: 8px; padding: 0.35rem 0.75rem; font-size: 1rem; }
+      .badge { display: inline-flex; gap: 0.4rem; align-items: center; padding: 0.15rem 0.65rem; background: #ebf8ff; border-radius: 999px; font-size: 0.875rem; color: #2b6cb0; }
+      .toolbar { display: flex; gap: 0.75rem; align-items: center; margin-bottom: 0.5rem; }
+      .toolbar button { border: none; border-radius: 8px; padding: 0.45rem 0.9rem; font-weight: 600; cursor: pointer; background: #2c5282; color: #fff; }
+      .toolbar button:disabled { background: #cbd5f5; color: #4a5568; cursor: not-allowed; }
+      .status { min-height: 1.5rem; font-size: 0.875rem; }
+      #productTable { overflow-x: auto; margin-top: 0.75rem; }
+      table { width: 100%; border-collapse: collapse; font-size: 0.95rem; }
+      th, td { border-bottom: 1px solid #e2e8f0; padding: 0.65rem; text-align: left; }
+      thead th { background: #f1f5f9; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.03em; }
+      .pager { display: flex; gap: 0.75rem; align-items: center; margin-top: 1rem; }
+      .pager button { border: none; border-radius: 6px; padding: 0.35rem 0.85rem; background: #234e52; color: #fff; cursor: pointer; }
+      .note { font-size: 0.9rem; color: #4a5568; margin: 0.25rem 0 0.75rem; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Role-based Product List</h1>
+      <p class="note">
+        This page mounts the actual Blinx table runtime from <code>lib/blinx.table.js</code> and toggles columns/actions using a role policy.
+      </p>
+
+      <div class="role-picker">
+        <label for="roleSelect">Simulate role:</label>
+        <select id="roleSelect">
+          <option value="admin" selected>admin</option>
+          <option value="manager">manager</option>
+          <option value="guest">guest</option>
+        </select>
+        <span class="badge">Active role: <strong id="activeRole">admin</strong></span>
+      </div>
+
+      <div class="toolbar">
+        <button id="createProduct">Create product</button>
+        <button id="deleteSelected">Delete selected</button>
+        <span id="tableStatus" class="status"></span>
+      </div>
+
+      <div id="productTable" data-testid="product-table"></div>
+
+      <div class="pager">
+        <button id="prevPage">Prev</button>
+        <button id="nextPage">Next</button>
+        <span id="pageLabel">Page: 1</span>
+      </div>
+    </main>
+
+    <script type="module" src="./role-based-product-list.ui.js"></script>
+  </body>
+</html>
