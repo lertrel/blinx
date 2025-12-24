@@ -11,6 +11,7 @@ What ships today:
 - Field rendering driven by datatype, constraints, and view preferences (readonly, required, min/max, CSS hints).
 - Layout definitions that allow form grouping to evolve independently from the data model.
 - Client-side runtime with pagination, diff tracking, and interceptor hooks.
+- Specs: see `docs/spec/README.md` for the supported Model / Data View / UI View shapes.
 
 ## Core Goals
 
@@ -18,6 +19,41 @@ What ships today:
 2. Provide schema-aware rendering to avoid hand-written forms/tables.
 3. Funnel every action (`save`, `reset`, `next`, `prev`, `create`, `delete`) through a shared interceptor pipeline.
 4. Stay client-first and performance-conscious without leaning on SSR.
+
+## Quick Start
+
+Minimal form + table rendering (using the default HTML adapter):
+
+```js
+import { blinxStore, DataTypes } from './lib/blinx.store.js';
+import { blinxForm } from './lib/blinx.form.js';
+import { blinxTable } from './lib/blinx.table.js';
+
+const model = {
+  id: 'Product',
+  fields: {
+    id: { type: DataTypes.string },
+    name: { type: DataTypes.string, required: true },
+    price: { type: DataTypes.number, min: 0 },
+  },
+};
+
+const store = blinxStore([{ id: '1', name: 'Apple', price: 1.25 }], model);
+
+blinxForm({
+  root: document.getElementById('form'),
+  store,
+  view: { sections: [{ title: 'Main', columns: 2, fields: ['name', 'price'] }] },
+});
+
+blinxTable({
+  root: document.getElementById('table'),
+  store,
+  view: { layout: 'table', columns: [{ field: 'name', label: 'Name' }, { field: 'price', label: 'Price' }] },
+});
+```
+
+For the full syntax of models, data views, and UI views, see `docs/spec/README.md`.
 
 ## Architecture & Data Flow
 
@@ -35,8 +71,8 @@ What ships today:
              └─ Headless UI / Radix UI adapters
 ```
 
-1. **Demo model** (`demo/basic-model/model/product.model.js`) describes fields, datatypes, constraints, and defaults.
-2. **View descriptors** outline sections, column layouts, and visibility rules.
+1. **Model** (`docs/spec/model.md`) describes fields, datatypes, constraints, and defaults.
+2. **UI views** (`docs/spec/ui-views.md`) outline sections/columns/layouts, controls, and presentation hooks.
 3. **Store** (`lib/blinx.store.js`) hydrates model + dataset, exposes mutation APIs, and emits granular events.
 4. **UI adapters** (`lib/blinx.form.js`, `lib/blinx.table.js`, or customs) build DOM widgets using model + view metadata.
 
@@ -107,7 +143,7 @@ This layering keeps validation, diffing, and messaging logic reusable while adap
 
 - **Interceptors**: Pre/post logic without mutating core behavior.
 - **Adapters**: Override `createField` and `formatCell` to integrate with any component library.
-- **View schema**: Extend sections/columns with conditional visibility, spans, or custom renderers.
+- **View schema**: Extend sections/columns with spans, custom renderers, and attrs-only presentation via `present()`/`rowPresent`.
 - **Store subscribe**: External listeners can sync with remote APIs, websockets, or optimistic UI flows.
 
 ## Current Capabilities
@@ -120,8 +156,10 @@ This layering keeps validation, diffing, and messaging logic reusable while adap
 - Reset & Save with diff tracking and messaging.
 - Create/Delete operations for both form and table.
 - Selection in the table for bulk delete.
+- Declarative controls (built-in + custom) and custom control actions.
 - Interceptor pattern for every action with access to state, controls, and `proceed()`.
 - Event-driven UI refresh so actions stay slim and predictable.
+- Conditional UI presentation via `present()`/`rowPresent` hooks (attrs-only, browser-enforced where possible).
 
 ## Remote Data (REST) with `BlinxRestDataSource`
 
@@ -173,7 +211,6 @@ if ((saveRes.conflicts || []).length) {
 
 ## Future Enhancements
 
-- Conditional display rules baked into the view schema.
 - Undo/Redo stack in the store.
 - Soft delete flows (mark inactive instead of removal).
 - Bulk create with prefilled values.
@@ -181,9 +218,16 @@ if ((saveRes.conflicts || []).length) {
 - React/Chakra adapter for enterprise-grade UI.
 - Virtualized table rendering for very large datasets.
 
+## Roadmap
+
+- **MVP1**: Deliver a minimum workable headless, model-driven UI framework that renders forms and tables from a shared schema. ✅
+- **MVP2**: Better and more customizable layout and practical validation.
+- **MVP3**: Better renderer and components with Shoelace integration and custom HTML template.
+- **MVP4**: React integration.
+- **MVP5**: Workflow and compliant control / data privacy supports.
+
 ## Open Questions / Next Bets
 
-- How should conditional visibility rules be declared so both form and table understand them?
 - Can adapter-level theming tokens keep Tailwind, Chakra, and other libraries aligned?
 - Should diff batching understand array moves (drag-and-drop) rather than treating them as delete+add pairs?
 
@@ -195,13 +239,12 @@ if ((saveRes.conflicts || []).length) {
 
 ## Key Improvements Over Time
 
-1. Added Next/Prev navigation and the record indicator.
+1. Added Next/Prev navigation, record indicator, and consistent status messaging.
 2. Introduced the interceptor pattern for all actions with idempotent `proceed()`.
-3. Added Create/Delete buttons for both form and table.
-4. Implemented table selection for bulk delete.
-5. Moved `formatCell` into adapters for pluggable rendering.
-6. Optimized rendering with `DocumentFragment`.
-7. Enhanced `store.diff()` to detect add/remove events.
-8. Let the form listen to `remove` events for auto-refresh.
-9. Cleared `saveStatus` on record navigation.
-10. Simplified `doDelete()` to rely on event-driven refresh.
+3. Added Create/Delete flows for form and collection/table (including bulk delete selection).
+4. Added pluggable renderers (`RegisteredUI`) and per-field/column renderer overrides.
+5. Added schema-driven default UI view generation (safe defaults; strict-mode opt-out).
+6. Added declarative UI view registry with fallback resolution (registry + legacy store-scoped maps).
+7. Added declarative toolbar controls (built-in + custom controls) with custom actions.
+8. Added computed fields support (virtual, read-only, dependency tracked).
+9. Added attrs-only presentation hooks (`present()` / `rowPresent`) for conditional UI behavior without a large DSL.
