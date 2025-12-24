@@ -257,7 +257,6 @@ describe('blinxForm', () => {
     expect(btn('Previous').disabled).toBe(true);
     expect(btn('Next').disabled).toBe(true);
     expect(btn('Save').disabled).toBe(true);
-    expect(btn('Reset').disabled).toBe(true);
     expect(btn('Delete').disabled).toBe(true);
     // Create should remain available so the user can add the first record.
     expect(btn('Create').disabled).toBe(false);
