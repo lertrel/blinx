@@ -86,5 +86,40 @@ test.describe('demo/basic-model/basic-model.html', () => {
     await rows.nth(1).click({ position: { x: 50, y: 10 } });
     await expect(recordIndicator).toHaveText('Record 2 of 3');
   });
+
+  test('Empty state disables navigation + destructive controls (Create stays enabled)', async ({ page }) => {
+    await page.goto('/demo/basic-model/basic-model.html');
+
+    const recordIndicator = page.locator('#record-indicator');
+    const saveStatus = page.locator('#save-status');
+
+    // Delete all initial records (3) using form controls.
+    await expect(recordIndicator).toHaveText('Record 1 of 3');
+    await page.locator('#btn-delete').click();
+    await expect(saveStatus).toHaveText('Record deleted.');
+    await expect(recordIndicator).toHaveText('Record 1 of 2');
+
+    await page.locator('#btn-delete').click();
+    await expect(saveStatus).toHaveText('Record deleted.');
+    await expect(recordIndicator).toHaveText('Record 1 of 1');
+
+    await page.locator('#btn-delete').click();
+    await expect(saveStatus).toHaveText('Record deleted.');
+    await expect(recordIndicator).toHaveText('No records');
+
+    // Form: navigation + destructive actions disabled, Create enabled.
+    await expect(page.locator('#btn-prev')).toBeDisabled();
+    await expect(page.locator('#btn-next')).toBeDisabled();
+    await expect(page.locator('#btn-save')).toBeDisabled();
+    await expect(page.locator('#btn-delete')).toBeDisabled();
+    await expect(page.locator('#btn-create')).toBeEnabled();
+
+    // Table: internal pager buttons disabled, delete-selected disabled, Create enabled.
+    const tableRoot = page.locator('#table-container');
+    await expect(tableRoot.getByRole('button', { name: 'Prev' })).toBeDisabled();
+    await expect(tableRoot.getByRole('button', { name: 'Next' })).toBeDisabled();
+    await expect(page.locator('#tbl-delete-selected')).toBeDisabled();
+    await expect(page.locator('#tbl-create')).toBeEnabled();
+  });
 });
 
