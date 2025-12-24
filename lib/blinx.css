@@ -60,6 +60,10 @@
   --blx-shadow-md: 0 6px 20px color-mix(in srgb, black, transparent 85%);
   --blx-shadow-lg: 0 12px 40px color-mix(in srgb, black, transparent 80%);
 
+  /* Inputs: keep shadows subtle to avoid "overlap" look in dense grids */
+  --blx-input-shadow: 0 1px 2px color-mix(in srgb, black, transparent 92%);
+  --blx-input-shadow-focus: 0 2px 10px color-mix(in srgb, black, transparent 88%);
+
   /* Spacing scale (small subset; keep contract minimal) */
   --blx-space-0_5: calc(var(--blx-space) * 0.5);
   --blx-space-2:   calc(var(--blx-space) * 2);
@@ -76,6 +80,9 @@
     --blx-shadow-sm: 0 2px 6px color-mix(in srgb, black, transparent 70%);
     --blx-shadow-md: 0 6px 20px color-mix(in srgb, black, transparent 65%);
     --blx-shadow-lg: 0 12px 40px color-mix(in srgb, black, transparent 60%);
+
+    --blx-input-shadow: 0 1px 2px color-mix(in srgb, black, transparent 72%);
+    --blx-input-shadow-focus: 0 2px 10px color-mix(in srgb, black, transparent 68%);
   }
 }
 
@@ -106,13 +113,27 @@
   gap: var(--blx-space-0_5);
 }
 
+/* When a toolbar follows rendered content, add separation to avoid visual overlap */
+.blx-card > .blx-toolbar,
+.blinx-form__content + .blx-toolbar,
+.blinx-collection__content + .blx-toolbar {
+  margin-top: var(--blx-space);
+  padding-top: var(--blx-space-0_5);
+  border-top: 1px solid color-mix(in srgb, var(--blx-border), transparent 35%);
+}
+
 .blx-stack > * + * {
   margin-top: var(--blx-space);
 }
 
 .blx-grid {
   display: grid;
-  gap: var(--blx-space-0_5);
+  /* Slightly larger default gap so adjacent controls/shadows don't read as overlap */
+  gap: var(--blx-space);
+}
+.blx-grid > * {
+  /* Allow grid children to shrink without overflow (important for long inputs/content) */
+  min-width: 0;
 }
 .blx-grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .blx-grid-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
@@ -216,7 +237,7 @@
   border: 1px solid var(--blx-border);
   border-radius: var(--blx-radius);
   padding: 0.6rem 0.8rem;
-  box-shadow: var(--blx-shadow-sm);
+  box-shadow: var(--blx-input-shadow);
   transition: box-shadow 140ms ease, border-color 140ms ease, background 140ms ease;
 }
 
@@ -226,7 +247,7 @@
   outline: 3px solid var(--blx-focus-ring);
   outline-offset: 2px;
   border-color: var(--blx-focus-ring);
-  box-shadow: var(--blx-shadow-md);
+  box-shadow: var(--blx-input-shadow-focus);
 }
 
 .blx-input:invalid {
