@@ -205,5 +205,29 @@ describe('blinxCollection', () => {
     expect(rootDecl.firstElementChild?.classList.contains('blinx-collection__content')).toBe(true);
     expect(rootDecl.lastElementChild?.classList.contains('blinx-controls')).toBe(true);
   });
+
+  test('when there are no records, disables prev/next/deleteSelected but keeps create enabled', () => {
+    const model = { fields: { name: { type: 'string' } } };
+    const store = blinxStore([], model);
+    const root = document.createElement('div');
+
+    blinxCollection({
+      root,
+      store,
+      view: { layout: 'table', columns: [{ field: 'name', label: 'Name' }] },
+      paging: { pageSize: 20 },
+      // controls omitted => auto toolbar
+    });
+
+    const toolbar = root.querySelector('.blinx-controls');
+    expect(toolbar).not.toBeNull();
+    const btn = (label) => Array.from(toolbar.querySelectorAll('button')).find(b => b.textContent === label);
+
+    expect(btn('Prev').disabled).toBe(true);
+    expect(btn('Next').disabled).toBe(true);
+    expect(btn('Delete Selected').disabled).toBe(true);
+    // Create should remain available so the user can add the first row.
+    expect(btn('Create').disabled).toBe(false);
+  });
 });
 
