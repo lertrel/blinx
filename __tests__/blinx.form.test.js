@@ -239,6 +239,29 @@ describe('blinxForm', () => {
     expect(toolbar.textContent).toContain('Record deleted.');
   });
 
+  test('when there are no records, disables prev/next/save/reset/delete but keeps create enabled', () => {
+    const model = {
+      fields: { name: { type: 'string', required: true, length: { min: 2 } } }
+    };
+    const store = blinxStore([], model);
+    const view = { sections: [{ title: 'Main', columns: 2, fields: ['name'] }] };
+    const root = document.createElement('div');
+
+    blinxForm({ root, view, store, recordIndex: 0 }); // controls omitted => internal toolbar
+
+    const toolbar = root.querySelector('.blinx-controls');
+    expect(toolbar).not.toBeNull();
+    expect(toolbar.textContent).toContain('No records');
+
+    const btn = (label) => Array.from(toolbar.querySelectorAll('button')).find(b => b.textContent === label);
+    expect(btn('Previous').disabled).toBe(true);
+    expect(btn('Next').disabled).toBe(true);
+    expect(btn('Save').disabled).toBe(true);
+    expect(btn('Delete').disabled).toBe(true);
+    // Create should remain available so the user can add the first record.
+    expect(btn('Create').disabled).toBe(false);
+  });
+
   test('declarative view.controls renders only explicitly mentioned controls', () => {
     const model = {
       fields: { name: { type: 'string', required: true, length: { min: 2 } } }
