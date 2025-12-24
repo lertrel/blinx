@@ -58,7 +58,7 @@ describe('schema-driven default UI view fallback', () => {
     expect(ths.length).toBeGreaterThan(1);
 
     // Search input only appears when view.searchFields exist (schema generator provides it)
-    const searchInput = root.querySelector('input[type="text"].input');
+    const searchInput = root.querySelector('input[type="text"].blx-input');
     expect(searchInput).toBeTruthy();
   });
 

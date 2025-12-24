@@ -62,7 +62,7 @@ describe('BlinxDefaultUI', () => {
     });
 
     const input = el.querySelector('input');
-    const error = el.querySelector('.error');
+    const error = el.querySelector('[data-blinx-part="error"]');
 
     expect(input).toBeTruthy();
     expect(input.type).toBe('number');
@@ -79,7 +79,7 @@ describe('BlinxDefaultUI', () => {
     expect(onChange.calls[0][0]).toBe('');
     expect(onChange.calls[0][1]).toEqual(['This field is required.']);
     expect(error.textContent).toContain('This field is required.');
-    expect(error.classList.contains('hidden')).toBe(false);
+    expect(error.hidden).toBe(false);
 
     input.value = '-1';
     input.dispatchEvent(new Event('change'));
@@ -87,11 +87,11 @@ describe('BlinxDefaultUI', () => {
     expect(onChange.calls[1][0]).toBe(-1);
     expect(onChange.calls[1][1]).toEqual(['Must be ≥ 0.']);
     expect(error.textContent).toContain('Must be ≥ 0.');
-    expect(error.classList.contains('hidden')).toBe(false);
+    expect(error.hidden).toBe(false);
 
     input.value = '5';
     input.dispatchEvent(new Event('blur'));
-    expect(error.classList.contains('hidden')).toBe(true);
+    expect(error.hidden).toBe(true);
   });
 
   test('createField: boolean uses checkbox and calls onChange with checked', () => {

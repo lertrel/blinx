@@ -1,0 +1,304 @@
+/* =====================================================================
+  Blinx CSS (tokens + Default UI styles)
+
+  Design goals:
+  - Provide a strong "back office" default look for the built-in renderer
+  - Keep multi-renderer apps safe: NO global element styling (no body/a/table)
+  - Keep theming portable: expose a small, semantic token contract via --blx-*
+
+  Usage:
+  - Import this stylesheet
+  - Optionally set `data-blinx-theme` on any container to establish a theme scope
+    (tokens cascade, so per-form/per-field theming is possible).
+===================================================================== */
+
+/* =========================================================
+  TOKENS (semantic contract)
+  - Define defaults on :root (safe; variables don't style anything by themselves)
+  - Override at any scope (e.g. [data-blinx-theme] { --blx-brand: ... })
+========================================================= */
+:root {
+  /* Brand / accent seed */
+  --blx-brand: #888888;
+
+  /* Interaction tuning */
+  --blx-hover-mix: 15%;
+  --blx-active-mix: 25%;
+  --blx-disabled-opacity: 0.45;
+
+  /* Layout scale */
+  --blx-radius: 0.6rem;
+  --blx-space: 1rem;
+
+  /* Typography */
+  --blx-font-family: system-ui, -apple-system, Segoe UI, sans-serif;
+  --blx-line-height: 1.5;
+
+  /* Derived palette */
+  --blx-bg:      color-mix(in srgb, var(--blx-brand), white 90%);
+  --blx-surface: color-mix(in srgb, var(--blx-brand), white 80%);
+  --blx-primary: var(--blx-brand);
+  --blx-accent:  color-mix(in srgb, var(--blx-brand), black 15%);
+  --blx-text:    #111;
+
+  /* Neutrals & borders */
+  --blx-muted:  color-mix(in srgb, var(--blx-text), transparent 40%);
+  --blx-border: color-mix(in srgb, var(--blx-primary), white 85%);
+
+  /* Interaction colors */
+  --blx-hover-bg:   color-mix(in srgb, var(--blx-primary), black var(--blx-hover-mix));
+  --blx-active-bg:  color-mix(in srgb, var(--blx-primary), black var(--blx-active-mix));
+  --blx-focus-ring: color-mix(in srgb, var(--blx-primary), white 60%);
+
+  /* Status */
+  --blx-success: #10b981;
+  --blx-warning: #f59e0b;
+  --blx-danger:  #e53e3e;
+
+  /* Elevation */
+  --blx-shadow-sm: 0 2px 6px color-mix(in srgb, black, transparent 90%);
+  --blx-shadow-md: 0 6px 20px color-mix(in srgb, black, transparent 85%);
+  --blx-shadow-lg: 0 12px 40px color-mix(in srgb, black, transparent 80%);
+
+  /* Spacing scale (small subset; keep contract minimal) */
+  --blx-space-0_5: calc(var(--blx-space) * 0.5);
+  --blx-space-2:   calc(var(--blx-space) * 2);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --blx-bg:      color-mix(in srgb, var(--blx-brand), black 85%);
+    --blx-surface: color-mix(in srgb, var(--blx-brand), black 70%);
+    --blx-accent:  color-mix(in srgb, var(--blx-brand), white 20%);
+    --blx-text:    #f5f5f5;
+    --blx-muted:   color-mix(in srgb, var(--blx-text), transparent 55%);
+    --blx-border:  color-mix(in srgb, var(--blx-primary), black 70%);
+    --blx-shadow-sm: 0 2px 6px color-mix(in srgb, black, transparent 70%);
+    --blx-shadow-md: 0 6px 20px color-mix(in srgb, black, transparent 65%);
+    --blx-shadow-lg: 0 12px 40px color-mix(in srgb, black, transparent 60%);
+  }
+}
+
+/* Accessibility: respect reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; animation: none !important; }
+}
+
+/* =========================================================
+  OPTIONAL "PAGE" WRAPPER (demo-friendly)
+  - Use on a container, not on body, to avoid global styling.
+========================================================= */
+.blx-page {
+  padding: var(--blx-space);
+  background: var(--blx-bg);
+  color: var(--blx-text);
+  font-family: var(--blx-font-family);
+  line-height: var(--blx-line-height);
+}
+
+/* =========================================================
+  LAYOUT
+========================================================= */
+.blx-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--blx-space-0_5);
+}
+
+.blx-stack > * + * {
+  margin-top: var(--blx-space);
+}
+
+.blx-grid {
+  display: grid;
+  gap: var(--blx-space-0_5);
+}
+.blx-grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.blx-grid-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.blx-grid-auto-fit {
+  grid-template-columns: repeat(auto-fit, minmax(var(--blx-min-col-size, 16rem), 1fr));
+}
+
+/* =========================================================
+  SURFACES
+========================================================= */
+.blx-card {
+  background: var(--blx-surface);
+  border: 1px solid var(--blx-border);
+  padding: calc(var(--blx-space) * 1.25);
+  border-radius: var(--blx-radius);
+  box-shadow: var(--blx-shadow-md);
+}
+
+.blx-section-title {
+  margin-block: var(--blx-space) var(--blx-space-0_5);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--blx-accent);
+  border-bottom: 1px solid var(--blx-border);
+  padding-bottom: 0.35rem;
+}
+
+/* =========================================================
+  BUTTONS
+========================================================= */
+.blx-btn {
+  appearance: none;
+  border: 1px solid transparent;
+  border-radius: var(--blx-radius);
+  padding: 0.55rem 1rem;
+  font: inherit;
+  cursor: pointer;
+  transition: background 0.15s ease, opacity 0.15s ease, border-color 0.15s ease;
+}
+
+.blx-btn[data-variant="primary"] {
+  background: var(--blx-primary);
+  color: white;
+}
+
+.blx-btn[data-variant="surface"],
+.blx-btn:not([data-variant]) {
+  background: color-mix(in srgb, var(--blx-surface), white 10%);
+  color: var(--blx-text);
+  border-color: var(--blx-border);
+}
+
+.blx-btn[data-variant="outline"] {
+  background: transparent;
+  color: var(--blx-primary);
+  border-color: var(--blx-border);
+}
+
+.blx-btn[data-variant="danger"] {
+  background: var(--blx-danger);
+  color: white;
+}
+
+.blx-btn:hover:not(:disabled) {
+  background: var(--blx-hover-bg);
+}
+.blx-btn:active:not(:disabled) {
+  background: var(--blx-active-bg);
+}
+.blx-btn:focus-visible {
+  outline: 3px solid var(--blx-focus-ring);
+  outline-offset: 2px;
+}
+.blx-btn:disabled,
+.blx-btn[aria-disabled="true"] {
+  opacity: var(--blx-disabled-opacity);
+  cursor: not-allowed;
+}
+
+/* =========================================================
+  FORMS
+========================================================= */
+.blx-field {
+  display: grid;
+  gap: 0.35rem;
+  align-content: start;
+}
+
+.blx-label {
+  display: inline-block;
+  font-weight: 600;
+  margin-bottom: 0.15rem;
+  color: var(--blx-text);
+}
+
+.blx-input {
+  appearance: none;
+  width: 100%;
+  background: color-mix(in srgb, var(--blx-surface), white 10%);
+  color: var(--blx-text);
+  border: 1px solid var(--blx-border);
+  border-radius: var(--blx-radius);
+  padding: 0.6rem 0.8rem;
+  box-shadow: var(--blx-shadow-sm);
+  transition: box-shadow 140ms ease, border-color 140ms ease, background 140ms ease;
+}
+
+.blx-input::placeholder { color: var(--blx-muted); }
+
+.blx-input:focus-visible {
+  outline: 3px solid var(--blx-focus-ring);
+  outline-offset: 2px;
+  border-color: var(--blx-focus-ring);
+  box-shadow: var(--blx-shadow-md);
+}
+
+.blx-input:invalid {
+  border-color: var(--blx-danger);
+}
+
+.blx-input:disabled,
+.blx-input[aria-disabled="true"] {
+  opacity: var(--blx-disabled-opacity);
+  cursor: not-allowed;
+}
+
+.blx-checkbox {
+  accent-color: var(--blx-primary);
+}
+.blx-checkbox:focus-visible {
+  outline: 3px solid var(--blx-focus-ring);
+  outline-offset: 2px;
+}
+
+.blx-error {
+  color: var(--blx-danger);
+  font-size: 0.8rem;
+  margin-top: 4px;
+}
+.blx-error[hidden] { display: none !important; }
+
+/* =========================================================
+  TABLE
+  - Scoped to .blx-table to avoid leaking into other renderers.
+========================================================= */
+.blx-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--blx-surface);
+  color: var(--blx-text);
+  border: 1px solid var(--blx-border);
+  border-radius: var(--blx-radius);
+  box-shadow: var(--blx-shadow-sm);
+  overflow: hidden; /* rounds thead corners */
+}
+
+.blx-table thead th {
+  text-align: left;
+  font-weight: 600;
+  background: color-mix(in srgb, var(--blx-primary), white 85%);
+  color: color-mix(in srgb, var(--blx-text), transparent 15%);
+  padding: 0.75rem 0.9rem;
+  border-bottom: 1px solid var(--blx-border);
+}
+
+.blx-table tbody td {
+  padding: 0.7rem 0.9rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--blx-border), transparent 30%);
+}
+
+.blx-table tbody tr:nth-child(even) { background: color-mix(in srgb, var(--blx-surface), white 6%); }
+.blx-table tbody tr:hover { background: color-mix(in srgb, var(--blx-surface), white 12%); }
+
+/* =========================================================
+  UTILITIES
+========================================================= */
+.blx-text-muted { color: var(--blx-muted); }
+.blx-sr-only {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
+
