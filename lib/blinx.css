@@ -103,6 +103,15 @@
   line-height: var(--blx-line-height);
 }
 
+/* Ensure "100% width" controls don't overflow due to padding/borders.
+   Keep it demo-scoped to avoid affecting host apps' box model. */
+.blx-page,
+.blx-page *,
+.blx-page *::before,
+.blx-page *::after {
+  box-sizing: border-box;
+}
+
 /* =========================================================
   LAYOUT
 ========================================================= */
@@ -232,6 +241,8 @@
 .blx-input {
   appearance: none;
   width: 100%;
+  max-width: 100%;
+  min-width: 0;
   background: color-mix(in srgb, var(--blx-surface), white 10%);
   color: var(--blx-text);
   border: 1px solid var(--blx-border);
