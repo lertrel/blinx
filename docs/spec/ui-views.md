@@ -28,6 +28,25 @@ Registry/resolution logic lives in `lib/blinx.ui-views.js`.
 
 ## Shared concepts
 
+### Controls and custom actions (`view.controls`)
+
+UI views may declare controls via `view.controls`. This can bind built-in controls (save/next/etc.) and also define custom controls (external DOM via `domId`, or auto-rendered buttons).
+
+For **custom controls**, `action` supports a tiered approach:
+
+- **Inline function** (quick / simple):
+  - `action: async (ctx) => { ... }`
+- **Declarative reference** (recommended for centralized logic):
+  - `action: "external.ok"`
+  - `action: { id: "external.ok", payload: { ... } }`
+
+To execute declarative action ids, pass an optional `actionRegistry` (and optionally `actionRunner`) to `blinxForm(...)` / `blinxCollection(...)` / `blinxTable(...)`.
+
+- If `actionRunner` is omitted, Blinx uses a small default runner:
+  - resolves `id` from `actionRegistry`
+  - runs an optional `validate: []` chain (first failure blocks)
+  - then calls `handler(ctx, payload)`
+
 ### Renderer selection
 
 UI views can reference a named renderer:
