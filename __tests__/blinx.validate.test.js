@@ -53,6 +53,14 @@ describe('validateField', () => {
     expect(validateField('not-a-uuid', { type: 'string', format: 'uuid' })).toEqual(['Invalid format.']);
     expect(validateField('hello-world-1', { type: 'string', format: 'slug' })).toEqual([]);
     expect(validateField('Hello World', { type: 'string', format: 'slug' })).toEqual(['Invalid format.']);
+    expect(validateField('+14155552671', { type: 'string', format: 'phone' })).toEqual([]);
+    expect(validateField('14155552671', { type: 'string', format: 'phone' })).toEqual(['Invalid format.']);
+    expect(validateField('+0123', { type: 'string', format: 'phone' })).toEqual(['Invalid format.']);
+  });
+
+  test('string: unknown format does not suppress pattern validation', () => {
+    expect(validateField('abc', { type: 'string', format: 'not-registered', pattern: '^[0-9]+$' })).toEqual(['Invalid format.']);
+    expect(validateField('123', { type: 'string', format: 'not-registered', pattern: '^[0-9]+$' })).toEqual([]);
   });
 
   test('array: validates minItems/maxItems/uniqueItems and itemType recursively', () => {
