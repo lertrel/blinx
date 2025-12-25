@@ -60,7 +60,7 @@ In UI rendering, two additional structural types are supported:
 - **`minLength?: number` / `maxLength?: number`** (synonyms)
 - **`exactLength?: number`** (identifiers that must be a specific size)
 - **`pattern?: string | RegExp`** (regex validation)
-- **`format?: 'email' | 'url' | 'uuid' | 'slug'`** (built-in patterns to avoid inline regex)
+- **`format?: 'email' | 'url' | 'uuid' | 'slug' | 'phone'`** (built-in patterns to avoid inline regex)
 - **`trim?: boolean` / `lowercase?: boolean`** (string normalization, applied via coercion)
 
 #### Numbers (`type: DataTypes.number`)
