@@ -85,6 +85,19 @@ This layering keeps validation, diffing, and messaging logic reusable while adap
 - Form validation runs on demand inside `doSave`, short-circuiting on the first failing section.
 - Failed validations push a status message and keep the user on the same record; adapters are free to paint inline errors.
 
+### Field Constraint Coverage
+
+The model schema now supports a larger catalog of constraints that are enforced uniformly by `validateField` and surfaced by adapters:
+
+- **Presence & nullability** – `required`, `nullable`, plus `defaultValue` helpers that seed newly-created records through the store.
+- **Numbers** – `min`, `max`, `integerOnly`, `step/stepBase`, `multipleOf`, and decimal `precision`/`scale`.
+- **Strings** – `length.min/max`, `length.exact`, regex `pattern`, common `format` helpers (`email`, `url`, `uuid`, `slug`), and optional coercions (`trim`, `lowercase`, `uppercase`, `collapseWhitespace`).
+- **Arrays** – `minItems`, `maxItems`, `uniqueItems`, and nested `itemType`/`items` definitions (recursively validated).
+- **Dates** – `minDate`, `maxDate`, `pastOnly`, `futureOnly`.
+- **Custom validators** – `validators: [fn]` receives the normalized value and can return a string or string[] of error messages.
+
+Adapters automatically coerce values (trim, casing, etc.) before storing them, and the store applies defaults+coercions whenever records are created or mutated so invariants stay intact even for programmatic updates.
+
 ## Status & Messaging Strategy
 
 - Save/Reset/Delete actions surface user-friendly messages through the injected `status` DOM node using semantic colors (`#2f855a` success, `#e53e3e` errors, slate for neutral states).

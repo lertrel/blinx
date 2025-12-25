@@ -39,4 +39,48 @@ describe('validateField', () => {
     // Falsy values are treated as "unset".
     expect(validateField('', { type: 'date' })).toEqual([]);
   });
+
+  test('nullable + default: distinguishes null handling', () => {
+    expect(validateField(null, { type: 'string', required: true, nullable: true })).toEqual([]);
+    expect(validateField(null, { type: 'string' })).toEqual(['Null is not allowed.']);
+  });
+
+  test('number: enforces integerOnly, multipleOf, step, precision/scale', () => {
+    expect(validateField(1.2, { type: 'number', integerOnly: true })).toEqual(['Must be an integer.']);
+    expect(validateField(7, { type: 'number', multipleOf: 4 })).toEqual(['Must be a multiple of 4.']);
+    expect(validateField(0.3, { type: 'number', step: 0.5 })).toEqual(['Must align with step 0.5.']);
+    expect(validateField('123.456', { type: 'number', precision: 5, scale: 2 })).toEqual([
+      'Exceeds precision 5.',
+      'Exceeds scale 2.',
+    ]);
+  });
+
+  test('string: supports exact length and format helpers', () => {
+    expect(validateField('abc', { type: 'string', length: { exact: 2 } })).toEqual(['Exact length 2 required.']);
+    expect(validateField('foo@bar', { type: 'string', format: 'email' })).toEqual(['Must be a valid email.']);
+    expect(validateField('Good Slug', { type: 'string', format: 'slug' })).toEqual(['Must be a valid slug (letters, numbers, dashes).']);
+  });
+
+  test('array: validates length, uniqueness, and item definitions', () => {
+    expect(validateField([], { type: 'array', minItems: 1 })).toEqual(['Must include at least 1 item(s).']);
+    expect(validateField(['a', 'a'], { type: 'array', uniqueItems: true })).toEqual(['Items must be unique.']);
+    expect(validateField(['1', 'x'], { type: 'array', itemType: 'number' })).toEqual(['Item 1: Must be a number.']);
+  });
+
+  test('date bounds: enforces min/max and futureOnly', () => {
+    const minDate = '2024-01-01';
+    const maxDate = '2024-12-31';
+    expect(validateField('2023-12-31', { type: 'date', minDate })).toEqual(['Date must be on/after minDate.']);
+    expect(validateField('2025-01-01', { type: 'date', maxDate })).toEqual(['Date must be on/before maxDate.']);
+    expect(validateField('2000-01-01', { type: 'date', futureOnly: true })).toEqual(['Date must be in the future.']);
+  });
+
+  test('custom validators: collects returned errors', () => {
+    const validators = [
+      val => (val !== 'ok' ? 'Value must equal "ok".' : undefined),
+      val => (val === 'fail' ? ['Another failure.'] : []),
+    ];
+    expect(validateField('nope', { type: 'string', validators })).toEqual(['Value must equal "ok".']);
+    expect(validateField('fail', { type: 'string', validators })).toEqual(['Value must equal "ok".', 'Another failure.']);
+  });
 });
