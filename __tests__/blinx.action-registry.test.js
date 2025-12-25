@@ -3,6 +3,7 @@
 import { blinxStore } from '../lib/blinx.store.js';
 import { blinxForm } from '../lib/blinx.form.js';
 import { blinxCollection } from '../lib/blinx.collection.js';
+import { blinxTable } from '../lib/blinx.table.js';
 
 function getToolbarButton(root, label) {
   const toolbar = root.querySelector('.blinx-controls');
@@ -131,6 +132,59 @@ describe('ActionRegistry + validation chain (custom controls)', () => {
     expect(validate).toHaveBeenCalledTimes(1);
     expect(handler).not.toHaveBeenCalled();
     expect(getToolbarText(root)).toContain('Action "customInternal" blocked.');
+  });
+
+  test('blinxCollection: missing registry entry is handled (no unhandled rejection) and writes failure status', async () => {
+    const model = { fields: { name: { type: 'string' } } };
+    const store = blinxStore([{ name: 'A' }], model);
+    const root = document.createElement('div');
+
+    blinxCollection({
+      root,
+      store,
+      paging: { pageSize: 20 },
+      // No actionRegistry provided on purpose
+      view: {
+        layout: 'table',
+        columns: [{ field: 'name', label: 'Name' }],
+        controls: {
+          status: true,
+          customInternal: { label: 'Do', action: 'missing.id' },
+        },
+      },
+    });
+
+    getToolbarButton(root, 'Do')?.click();
+    await new Promise(r => setTimeout(r, 0));
+
+    expect(getToolbarText(root)).toContain('Action "customInternal" failed.');
+  });
+
+  test('blinxTable forwards actionRegistry/actionRunner to underlying blinxCollection', async () => {
+    const model = { fields: { name: { type: 'string' } } };
+    const store = blinxStore([{ name: 'A' }], model);
+    const root = document.createElement('div');
+
+    const handler = jest.fn(async () => {});
+    const actionRegistry = { 'external.ok': { handler } };
+
+    blinxTable({
+      root,
+      store,
+      pageSize: 20,
+      actionRegistry,
+      view: {
+        columns: [{ field: 'name', label: 'Name' }],
+        controls: {
+          customInternal: { label: 'Do', action: 'external.ok' },
+        },
+      },
+    });
+
+    getToolbarButton(root, 'Do')?.click();
+    await new Promise(r => setTimeout(r, 0));
+
+    expect(handler).toHaveBeenCalledTimes(1);
   });
 });
 
