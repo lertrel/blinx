@@ -2,7 +2,7 @@ import { validateArray } from '../lib/validate/array.js';
 import { validateDate } from '../lib/validate/date.js';
 import { validateNumber } from '../lib/validate/number.js';
 import { validateString } from '../lib/validate/string.js';
-import { validators } from '../lib/blinx.validate.js';
+import { registerFormat, validators } from '../lib/blinx.validate.js';
 
 describe('validate modules (direct imports)', () => {
   test('validateString: enum behavior is preserved (truthy only)', () => {
@@ -37,6 +37,13 @@ describe('blinx.validate façade exports', () => {
   test('exports validators map with {string, number, date, array}', () => {
     expect(Object.keys(validators).sort()).toEqual(['array', 'date', 'number', 'string']);
     expect(validators.string('x', { type: 'string', minLength: 2 })).toEqual(['Min length 2.']);
+  });
+
+  test('registerFormat: supports custom formats and trims keys', () => {
+    registerFormat('  __test_format_trim__  ', (v) => v === 'ok', { override: true });
+    expect(validators.string('ok', { type: 'string', format: '__test_format_trim__' })).toEqual([]);
+    expect(validators.string('ok', { type: 'string', format: '  __test_format_trim__  ' })).toEqual([]);
+    expect(validators.string('nope', { type: 'string', format: '__test_format_trim__' })).toEqual(['Invalid format.']);
   });
 });
 
