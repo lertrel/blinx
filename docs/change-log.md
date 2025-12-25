@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented here.
 
+## [0.4.0] - 2025-12-25
+- Expanded `DataTypes` to cover ids, email/phone/url formats, currency/percent/rating numerics, geo points, and rich/markdown text.
+- Enhanced `validateField` with built-in validators (regex, URL parsing, E.164, UUID) plus sensible numeric defaults and geo bounds.
+- Upgraded the default HTML adapter to render format-aware inputs (email/tel/password, currency sliders, dual lat/lng controls) and to format currency/percent/rating values in tables.
+- Refreshed the sample `productModel` to showcase the new schema capabilities in both the form and table views.
+
 ## [0.3.0] - 2025-12-11
 - Added formal design notes under `docs/design-notes.md` to capture architectural decisions and future bets.
 - Documented change history to improve onboarding for new contributors.

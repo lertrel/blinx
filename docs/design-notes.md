@@ -11,6 +11,13 @@ Blinx is a model-driven UI framework that renders forms and tables from a shared
 
 This layering lets us swap adapters (Tailwind, Chakra, Headless UI) without rewriting validation, diffing, or persistence logic.
 
+### Data Types & Format Contracts
+
+- `DataTypes` now includes semantic aliases (`id`, `slug`, `email`, `phone`, `url`, `secret`, `currency`, `percent`, `rating`, `geoPoint`, `richText`, `markdown`, `address`, `json`, `blob`) so schemas express intent instead of ad hoc patterns.
+- Specialized types unlock default UI affordances in the HTML adapter (e.g. tel/email inputs, password masking, currency formatting, geo pair inputs) while `validateField` enforces the right rules (URL parsing, E.164, UUID regex, numeric ranges, lat/lng bounds).
+- A `format` property on any string definition reuses the same validators, allowing teams to keep primitives stable yet opt into stricter formats.
+- Numeric helpers set sensible defaults: `percent` clamps to 0–100, `rating` to 0–5, and `currency` prefers two-decimal steps. Host apps can still override `min`, `max`, or `step` per field.
+
 ## Store Principles
 - Snapshot cloning keeps `original` and `current` arrays isolated so diffing remains cheap JSON comparisons.
 - Every mutator (`setField`, `addRecord`, `removeRecords`, `commit`, `reset`) funnels through `notify`, which publishes both structured paths and payloads for downstream listeners.

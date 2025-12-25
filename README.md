@@ -42,6 +42,13 @@ What ships today:
 
 This layering keeps validation, diffing, and messaging logic reusable while adapters focus on look-and-feel.
 
+## Data Modeling & Constraints
+
+- **Extended data types**: Beyond the base `string`, `number`, `boolean`, `date`, `enum`, and `array`, the store now ships specialized types for `id`, `slug`, `email`, `phone`, `url`, `secret`, `currency`, `percent`, `rating`, `geoPoint`, `richText`, `markdown`, `address`, `json`, and `blob`. Each type carries intent so adapters can render better widgets (password inputs, email/tel controls, formatted currency fields, dual latitude/longitude inputs, etc.).
+- **Schema-driven validation**: `validateField` understands both the new types and traditional constraints (`required`, `min`, `max`, `length`, `pattern`). Numeric formats like `percent` and `rating` include default ranges, while `geoPoint` enforces paired coordinates within valid bounds. String formats (`email`, `slug`, `uuid`, etc.) plug in regex/URL/E.164 checks automatically.
+- **Format aliases**: When keeping the primitive type (`{ type: 'string' }`), a `format` property (e.g. `{ format: 'email' }`) reuses the same validators, so teams can opt into stricter rules without expanding the enum.
+- **Sample model**: `model/product.model.js` demonstrates the richer metadata by mixing currency, percent, rating, geoPoint, and contact fields into one entity definition. The default form/table immediately pick up the new widgets and formatting rules.
+
 ## Store Principles
 
 - Snapshot cloning keeps `original` and `current` arrays isolated so diffing remains cheap JSON comparisons.

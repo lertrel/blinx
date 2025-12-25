@@ -19,6 +19,9 @@ describe('BlinxDefaultAdapter', () => {
     numberEl.value = '12.5';
     expect(a.readValue(numberEl, { type: 'number' })).toBe(12.5);
 
+    numberEl.value = '8.25';
+    expect(a.readValue(numberEl, { type: 'currency' })).toBe(8.25);
+
     const boolEl = document.createElement('input');
     boolEl.type = 'checkbox';
     boolEl.checked = true;
@@ -31,6 +34,10 @@ describe('BlinxDefaultAdapter', () => {
     const strEl = document.createElement('input');
     strEl.value = 'x';
     expect(a.readValue(strEl, { type: 'string' })).toBe('x');
+
+    const geoEl = document.createElement('div');
+    geoEl.__blinxGeoPointValue = () => ({ lat: 10, lng: 20 });
+    expect(a.readValue(geoEl, { type: 'geoPoint' })).toEqual({ lat: 10, lng: 20 });
   });
 
   test('formatCell: formats booleans, numbers, arrays, and defaults', () => {
@@ -48,6 +55,12 @@ describe('BlinxDefaultAdapter', () => {
 
     expect(a.formatCell(undefined, { type: 'string' })).toBe('');
     expect(a.formatCell('hi', { type: 'string' })).toBe('hi');
+
+    expect(a.formatCell(12.5, { type: 'currency', currency: 'USD', currencyLocale: 'en-US' })).toBe('$12.50');
+    expect(a.formatCell(35, { type: 'percent' })).toBe('35%');
+    expect(a.formatCell(4.5, { type: 'rating', max: 5 })).toBe('4.5 / 5');
+    expect(a.formatCell({ lat: 1, lng: 2 }, { type: 'geoPoint' })).toBe('1, 2');
+    expect(a.formatCell('secret', { type: 'secret' })).toBe('***');
   });
 
   test('createField: number input validates and shows errors on change/blur', () => {
@@ -92,6 +105,63 @@ describe('BlinxDefaultAdapter', () => {
     input.value = '5';
     input.dispatchEvent(new Event('blur'));
     expect(error.classList.contains('hidden')).toBe(true);
+  });
+
+  test('createField: percent uses numeric defaults', () => {
+    const a = new BlinxDefaultAdapter();
+    const onChange = createOnChangeSpy();
+
+    const { el } = a.createField({
+      fieldKey: 'discount',
+      def: { type: 'percent' },
+      value: '',
+      onChange,
+    });
+
+    const input = el.querySelector('input');
+    expect(input.type).toBe('number');
+    expect(input.min).toBe('0');
+    expect(input.max).toBe('100');
+    expect(input.step).toBe('1');
+  });
+
+  test('createField: email input uses email type', () => {
+    const a = new BlinxDefaultAdapter();
+    const onChange = createOnChangeSpy();
+
+    const { el } = a.createField({
+      fieldKey: 'contactEmail',
+      def: { type: 'email', required: true },
+      value: '',
+      onChange,
+    });
+
+    const input = el.querySelector('input');
+    expect(input.type).toBe('email');
+    expect(input.getAttribute('required')).toBe('true');
+  });
+
+  test('createField: geoPoint renders paired inputs and emits structured value', () => {
+    const a = new BlinxDefaultAdapter();
+    const onChange = createOnChangeSpy();
+
+    const { el } = a.createField({
+      fieldKey: 'warehouseLocation',
+      def: { type: 'geoPoint' },
+      value: { lat: 10, lng: 20 },
+      onChange,
+    });
+
+    const inputs = el.querySelectorAll('input');
+    expect(inputs.length).toBe(2);
+    expect(inputs[0].value).toBe('10');
+    expect(inputs[1].value).toBe('20');
+
+    inputs[0].value = '15';
+    inputs[0].dispatchEvent(new Event('change'));
+
+    expect(onChange.calls[0][0]).toEqual({ lat: 15, lng: 20 });
+    expect(onChange.calls[0][1]).toEqual([]);
   });
 
   test('createField: boolean uses checkbox and calls onChange with checked', () => {
