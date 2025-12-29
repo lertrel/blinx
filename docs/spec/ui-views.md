@@ -16,8 +16,7 @@ Blinx can resolve a UI view from multiple sources (in this order):
 
 1) **Explicit object** passed as `view` to the component call (always wins)
 2) **String view name** passed as `view`:
-   - first: store-scoped `store.getUIViews()[name]` (legacy)
-   - then: model registry via `registerModelViews(model, views)` (preferred)
+   - model registry via `registerModelViews(model, views)` (preferred)
 3) **Omitted `view`**:
    - use model registry default for the kind (`form` or `collection`)
    - if allowed, fall back to **schema-generated default view** (see `BlinxConfig.isGeneratedViewAllowed()`)
