@@ -6,20 +6,74 @@ This describes the **UI view schema** Blinx uses to render:
 - `blinxCollection(...)` (multi-record, multiple layouts)
 - `blinxTable(...)` (a convenience wrapper around `blinxCollection` forcing table layout)
 
-It also documents how UI views are **resolved** (registry vs store-scoped maps vs generated fallbacks).
+It also documents how UI views are **resolved** (ui-view-registry vs inline-view vs generated fallbacks).
 
 ---
 
 ## UI view resolution (where views come from)
 
-Blinx can resolve a UI view from multiple sources (in this order):
+Blinx supports two ways to provide a UI view:
 
-1) **Explicit object** passed as `view` to the component call (always wins)
-2) **String view name** passed as `view`:
-   - model registry via `registerModelViews(model, views)` (preferred)
-3) **Omitted `view`**:
-   - use model registry default for the kind (`form` or `collection`)
-   - if allowed, fall back to **schema-generated default view** (see `BlinxConfig.isGeneratedViewAllowed()`)
+### Preferred: **ui-view-registry** (recommended default)
+
+Use `registerModelViews(model, views)` to register a **view container** per model, then reference views by **string name** from `blinxForm` / `blinxCollection` / `blinxTable`.
+
+Why this is preferred in the long run (larger codebases):
+
+- **Stronger consistency**: every UI surface is named + centralized; easier to audit and reason about.
+- **Better tooling potential**: static validation, linting, diffing, and view dependency graphs are simpler when everything is referenced by name.
+- **Avoids “view sprawl”**: prevents ad-hoc inline views that diverge from product UX standards.
+
+Example (registry-first):
+
+```js
+import { registerModelViews } from '../../lib/blinx.ui-views.js';
+
+registerModelViews(ProductModel, {
+  form: {
+    default: { sections: [{ title: 'Basics', columns: 2, fields: ['name', 'price'] }] },
+    edit: { sections: [{ title: 'Edit', columns: 2, fields: ['name', 'price'] }] },
+  },
+  collection: {
+    default: { layout: 'table', columns: [{ field: 'name', label: 'Name' }, { field: 'price', label: 'Price' }] },
+    list: { layout: 'table', columns: [{ field: 'name', label: 'Name' }, { field: 'price', label: 'Price' }] },
+  },
+});
+
+blinxForm({ root, store });                 // => resolves ProductModel.form.default
+blinxForm({ root, store, view: 'edit' });   // => resolves ProductModel.form.edit
+blinxCollection({ root, store, view: 'list' }); // => resolves ProductModel.collection.list
+```
+
+### Advanced / escape hatch: **inline-view** (object passed as `view`)
+
+You can pass a view object directly as `view: { ... }`. This is intentionally supported as an **advanced/escape hatch** for cases like:
+
+- **Composable / dynamic views** (tenant/role/feature-flag driven)
+- **Testing & prototyping** (no registry setup/cleanup)
+- **Runtime-only view composition**
+- **One-off screens / experiments**
+- **Plugin / extension scenarios** (avoid registry coordination/collisions)
+- **Generated / transformed views** (merge/override/inject/hide fields on the fly)
+
+Example (inline-view):
+
+```js
+blinxForm({
+  root,
+  store,
+  view: {
+    sections: [{ title: 'Inline', columns: 1, fields: ['name'] }],
+  },
+});
+```
+
+### Resolution order (when `blinxForm`/`blinxCollection`/`blinxTable` runs)
+
+1) **Inline-view**: if `view` is an **object**, it is used as-is.
+2) **Registry**: if `view` is a **string**, it is resolved from the registry: `(model, kind, viewName)`.
+3) **Registry default**: if `view` is **omitted**, it resolves `(model, kind, default)`.
+4) **Optional fallback**: if allowed, it can fall back to a **schema-generated default view** (see `BlinxConfig.isGeneratedViewAllowed()`).
 
 Registry/resolution logic lives in `lib/blinx.ui-views.js`.
 
