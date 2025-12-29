@@ -32,7 +32,7 @@ const store = blinxStore({
     archived: { resource: 'products', defaultFilter: { archived: true } },
   },
   defaultView: 'default',
-  // Optional store-scoped UI view map (legacy): uiViews: { edit: {...}, list: {...} }
+  // Optional store-scoped UI view map (legacy string-key lookup): uiViews: { edit: {...}, list: {...} }
   uiViews: {},
 });
 ```
@@ -54,7 +54,7 @@ This returns a **manager** that:
   - convenience: `initialArray` can be used instead of `dataSource`
 - **`views`**: map of viewName -> viewConfig (see below)
 - **`defaultView`**: name of the default active view (fallback: first key, else `"default"`)
-- **`uiViews`**: optional store-scoped UI view map (legacy compatibility)
+- **`uiViews`**: optional store-scoped UI view map (legacy string-key lookup via `store.getUIViews()`)
 - **`dataSourceOptions`**: optional defaults passed to `dataSource.init(...)` (if implemented)
 
 ### B) `{ model, dataSource, view }` (single-view shorthand)
