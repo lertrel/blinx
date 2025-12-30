@@ -18,7 +18,7 @@ All notable changes to this project will be documented here.
 - Ensured store-driven events (`reset`, `remove`) trigger form/table refreshes to keep UI and data in sync.
 
 ## [0.1.0] - 2025-06-30
-- Initial release of the model-driven UI engine with:
+- First documented release entry (the project may have existed prior to this date) with:
   - Schema-aware form rendering (sections, column spans, basic validation).
   - Table rendering with client-side pagination and row click navigation.
   - Two-way binding via the headless store, including diff/commit/reset APIs.
