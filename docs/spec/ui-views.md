@@ -75,6 +75,10 @@ blinxForm({
 3) **Registry default**: if `view` is **omitted**, it resolves `(model, kind, default)`.
 4) **Optional fallback**: if allowed, it can fall back to a **schema-generated default view** (see `BlinxConfig.isGeneratedViewAllowed()`).
 
+### Debugging note: `blinxDump()` output vs UI view schema
+
+Blinx includes a debug helper (`blinxDump()`) that prints a snapshot of internal state for troubleshooting. Part of that output may include a section like `generatedUIViews`.
+
 Note on generated view dumps:
 
 - You may see debug output shaped like:
