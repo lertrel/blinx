@@ -75,6 +75,13 @@ blinxForm({
 3) **Registry default**: if `view` is **omitted**, it resolves `(model, kind, default)`.
 4) **Optional fallback**: if allowed, it can fall back to a **schema-generated default view** (see `BlinxConfig.isGeneratedViewAllowed()`).
 
+Note on generated view dumps:
+
+- You may see debug output shaped like:
+  - `generatedUIViews: [{ model: ..., kinds: { form: {...}, collection: {...} } }]`
+- That shape is a **debug snapshot/dump structure** (grouped by kind for reporting). It is **not** the schema of the `view` object that `blinxForm` / `blinxCollection` / `blinxTable` consume.
+- Components always consume a **single per-kind view object** (e.g. a `form` view with `sections`, or a `collection` view with `layout/columns`).
+
 Registry/resolution logic lives in `lib/blinx.ui-views.js`.
 
 ---
