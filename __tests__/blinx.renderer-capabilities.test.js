@@ -105,5 +105,48 @@ describe('Renderer capability hook: supportsField()', () => {
     // One row, one column => cell should render using fallback renderer (default) without throwing.
     expect(root.textContent).toContain('BIN');
   });
+
+  test('blinxCollection: unsupported cell does not show placeholder for legitimate empty values', async () => {
+    const { blinxStore } = await import('../lib/blinx.store.js');
+    const { blinxCollection } = await import('../lib/blinx.collection.js');
+    const { RegisteredUI } = await import('../lib/blinx.registered-ui.js');
+    const { BlinxConfig } = await import('../lib/blinx.config.js');
+
+    // No fallback renderer; non-strict => safe fallback path.
+    BlinxConfig.setUIRendererFallback(null);
+    BlinxConfig.setUIRendererStrict(false);
+    BlinxConfig.setUIUnsupportedPlaceholder('__PLACEHOLDER__');
+
+    RegisteredUI.register('no-number-cell', {
+      supportsField({ fieldDef, kind, mode }) {
+        return !(kind === 'collection' && mode === 'cell' && fieldDef?.type === 'number');
+      },
+      createField() { return { el: document.createElement('div'), getValue: () => null, setError: () => {} }; },
+      formatCell() {
+        throw new Error('formatCell should not be called for unsupported cell in safe fallback mode');
+      },
+    });
+
+    const model = { id: 'M', fields: { price: { type: 'number' } } };
+    const store = blinxStore([{ price: null }], model);
+    const root = document.createElement('div');
+
+    blinxCollection({
+      root,
+      store,
+      view: {
+        layout: 'table',
+        columns: [{ field: 'price', label: 'Price', renderer: 'no-number-cell' }],
+      },
+      paging: { pageSize: 20 },
+    });
+
+    // Cell should render as empty string (default renderer), not placeholder.
+    const cell = root.querySelector('tbody tr td:nth-child(2)'); // 1st is selection checkbox
+    expect(cell).toBeTruthy();
+    expect(cell.getAttribute('data-blinx-unsupported')).toBe('true');
+    expect(cell.textContent).toBe('');
+    expect(root.textContent).not.toContain('__PLACEHOLDER__');
+  });
 });
 
