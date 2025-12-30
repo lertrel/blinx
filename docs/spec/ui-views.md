@@ -120,6 +120,43 @@ UI views can reference a named renderer:
 
 Renderers are registered via `RegisteredUI.register(name, renderer)`.
 
+#### Renderer capability hook (advanced)
+
+Custom renderers may optionally implement:
+
+- **`supportsField({ model, fieldKey, fieldDef, kind: 'form'|'collection', mode: 'field'|'cell'|'header', rendererName }) => boolean`**
+
+If provided and it returns `false`, Blinx can:
+
+- try a **fallback renderer** (if configured),
+- otherwise render a **safe fallback** (non-strict mode),
+- or **throw with a clear diagnostic** (strict mode).
+
+Configure behavior via `BlinxConfig`:
+
+```js
+import { BlinxConfig } from '../../lib/blinx.config.js';
+
+BlinxConfig.setUIRendererFallback('default'); // optional
+BlinxConfig.setUIRendererStrict(true);        // optional
+```
+
+Example: extend `BlinxDefaultUI` to refuse `blob` fields in forms:
+
+```js
+import { RegisteredUI } from '../../lib/blinx.registered-ui.js';
+import { BlinxDefaultUI } from '../../lib/blinx.adapters.default.js';
+
+class MyUI extends BlinxDefaultUI {
+  supportsField({ fieldDef, kind, mode }) {
+    if (kind === 'form' && mode === 'field' && fieldDef?.type === 'blob') return false;
+    return true;
+  }
+}
+
+RegisteredUI.register('my-ui', new MyUI());
+```
+
 ### `present()` and `rowPresent` (minimal conditional behavior)
 
 Instead of a large DSL, Blinx supports **attrs-only presentation hooks**:
