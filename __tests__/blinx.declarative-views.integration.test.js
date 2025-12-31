@@ -3,6 +3,7 @@
 import { blinxStore } from '../lib/blinx.store.js';
 import { blinxCollection } from '../lib/blinx.collection.js';
 import { blinxForm } from '../lib/blinx.form.js';
+import { registerModelViews } from '../lib/blinx.ui-views.js';
 
 import { ProductModel, ProductDataViews, ProductUIViews } from '../test-fixtures/models/product/index.js';
 
@@ -35,12 +36,16 @@ describe('Declarative data views + UI views (integration)', () => {
       },
     };
 
+    registerModelViews(ProductModel, {
+      form: { default: ProductUIViews.edit, edit: ProductUIViews.edit },
+      collection: { default: ProductUIViews.list, list: ProductUIViews.list },
+    });
+
     const store = blinxStore({
       model: ProductModel,
       dataSource,
       views: ProductDataViews,
       defaultView: 'catalog',
-      uiViews: ProductUIViews,
     });
 
     // Load default (catalog)

@@ -31,6 +31,15 @@ describe('validate modules (direct imports)', () => {
     expect(validateArray(['a', 'a'], { type: 'array', uniqueItems: true }, validateItem)).toEqual(['Items must be unique.']);
     expect(validateArray([1], { type: 'array', itemType: 'string' }, validateItem)).toEqual(['Item 1: Must be a string.']);
   });
+
+  test('validateArray: uniqueItems uses stableStringify for numbers (NaN/Infinity/-0)', () => {
+    const validateItem = () => [];
+    expect(validateArray([NaN, NaN], { type: 'array', uniqueItems: true }, validateItem)).toEqual(['Items must be unique.']);
+    expect(validateArray([Infinity, Infinity], { type: 'array', uniqueItems: true }, validateItem)).toEqual(['Items must be unique.']);
+    expect(validateArray([-Infinity, -Infinity], { type: 'array', uniqueItems: true }, validateItem)).toEqual(['Items must be unique.']);
+    // JS treats -0 and 0 as equivalent for uniqueness; stableStringify should preserve that behavior.
+    expect(validateArray([0, -0], { type: 'array', uniqueItems: true }, validateItem)).toEqual(['Items must be unique.']);
+  });
 });
 
 describe('blinx.validate façade exports', () => {

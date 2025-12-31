@@ -12,8 +12,6 @@ export const ProductModel = {
   fields: {
     // fieldName: FieldDef
   },
-  // Optional legacy: model.uiViews (store-scoped UI view map; prefer registerModelViews or cfg.uiViews)
-  uiViews: { /* legacy map */ },
 };
 ```
 

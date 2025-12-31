@@ -20,18 +20,12 @@ describe('UI Views registry (Option A)', () => {
     expect(resolveModelUIView({ model: ModelA, kind: 'collection' })?.layout).toBe('table');
   });
 
-  test('resolveComponentUIView: store-scoped uiViews win over registry for string keys', () => {
+  test('resolveComponentUIView: string view resolves from registry by name', () => {
     const ModelA = { id: 'A', fields: {} };
     registerModelViews(ModelA, { form: { default: { sections: [] }, edit: { sections: [{ title: 'from-registry', columns: 1, fields: [] }] } } });
 
-    const store = {
-      getUIViews: () => ({
-        edit: { sections: [{ title: 'from-store', columns: 1, fields: [] }] },
-      }),
-    };
-
-    const resolved = resolveComponentUIView({ store, model: ModelA, kind: 'form', view: 'edit' });
-    expect(resolved?.sections?.[0]?.title).toBe('from-store');
+    const resolved = resolveComponentUIView({ model: ModelA, kind: 'form', view: 'edit' });
+    expect(resolved?.sections?.[0]?.title).toBe('from-registry');
   });
 });
 
