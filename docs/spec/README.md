@@ -8,7 +8,8 @@ This folder documents the **supported shapes** (syntax) and **semantics** (behav
 
 Docs:
 
-- `model.md`
-- `data-views.md`
-- `ui-views.md`
+- [`model.md`](model.md)
+- [`data-views.md`](data-view.md)
+- [`ui-views.md`](ui-view.md)
+
 
