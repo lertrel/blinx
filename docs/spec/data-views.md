@@ -78,6 +78,35 @@ Pagination defaults (one of):
 - **`defaultPage?: { mode: 'cursor'|'page'|'offset', limit?: number, after?: string|null, page?: number, offset?: number }`**
 - alias: **`page`** (same shape as `defaultPage`)
 
+## Optional: per-view cache strategy (multi-page / working-set / full)
+
+Remote view stores can optionally maintain an **entity cache** across multiple pages/queries. This enables **local criteria** (client-side filtering) over:
+
+- the **loaded working set** (default when enabled), or
+- a best-effort **full cache** (warm all pages; bounded by configured caps).
+
+Declare cache config per data view:
+
+```js
+views: {
+  default: {
+    resource: 'products',
+    entityType: 'Product',
+    cache: {
+      completeness: 'loaded' | 'all',        // 'loaded' caches what you fetched; 'all' can warm all pages
+      maxEntities: 20000,                    // optional safety cap (recommended)
+      eviction: { policy: 'lru'|'ttl'|'lru+ttl', ttlMs?: number },
+      fields: { include?: string[], exclude?: string[] }, // avoid caching heavy fields unless needed
+      persist: { adapter: 'memory'|'indexeddb' },         // adapter-driven (indexeddb optional)
+    }
+  }
+}
+```
+
+Notes:
+- This cache is **deduped by id** (keyed by `keyField`).
+- Local criteria is only guaranteed correct over the cached subset unless `completeness: 'all'` is used (and the warm succeeds).
+
 ## Multi-view manager API surface (important bits)
 
 - **`store.view(name)` / `store.collection(name)`**
@@ -89,4 +118,29 @@ Pagination defaults (one of):
 The manager also proxies common store APIs to the active view:
 `getRecord/getLength/setField/addRecord/removeRecords/update/updateIndex/toJSON/diff/commit/reset`
 and remote APIs: `loadFirst/pageNext/pagePrev/search/save/getStatus/getPagingState`.
+
+## Criteria API (remote + local)
+
+Per-view stores also support criteria changes through a single entry point:
+
+- **`store.setCriteria(criteria)`**: applies either local or remote criteria and emits `EventTypes.criteriaChanged`
+- **`store.getCriteria()`**: returns the last applied criteria (serializable summary; predicate bodies are not included)
+
+Criteria shape:
+
+```js
+await store.setCriteria({
+  purpose: 'productSearch',              // string label (for routing/debugging)
+  mode: 'local' | 'remote' | 'auto',
+  scope: 'cached' | 'all',               // local correctness scope
+  filter: null | { /* DSL or equality */ } | ((record, ctx) => boolean), // predicate is local-only escape hatch
+  sort: [{ field: 'price', dir: 'asc' }],
+  page: { limit: 50 },                   // used by local paging (offset-mode) for remote stores
+  meta: { label: 'Men + 1000-5000' },    // optional debugging/UI metadata
+});
+```
+
+Predicate (`(record, ctx) => boolean`) is supported as an **escape hatch** for advanced logic:
+- it is treated as **local-only** (remote mode will fall back / be rejected by implementations)
+- it is **not serialized** in `criteriaChanged` payloads
 
