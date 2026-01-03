@@ -119,28 +119,29 @@ The manager also proxies common store APIs to the active view:
 `getRecord/getLength/setField/addRecord/removeRecords/update/updateIndex/toJSON/diff/commit/reset`
 and remote APIs: `loadFirst/pageNext/pagePrev/search/save/getStatus/getPagingState`.
 
-## Criteria API (remote + local)
+## Local view criteria (per-consumer projections)
 
-Per-view stores also support criteria changes through a single entry point:
+To avoid “one criteria change affects all components”, Blinx supports **local views**: derived, store-compatible projections of a remote view that have their **own event bus** and their **own criteria**.
 
-- **`store.setCriteria(criteria)`**: applies either local or remote criteria and emits `EventTypes.criteriaChanged`
-- **`store.getCriteria()`**: returns the last applied criteria (serializable summary; predicate bodies are not included)
+- **`remoteView.localView(localViewKey)`** returns a derived store for that consumer key.
+- **`localView.setCriteria(criteria)`** applies local criteria (from the shared per-view cache) and emits `EventTypes.criteriaChanged` + `EventTypes.reset` on the **local view** bus only.
 
-Criteria shape:
+Example:
 
 ```js
-await store.setCriteria({
-  purpose: 'productSearch',              // string label (for routing/debugging)
-  mode: 'local' | 'remote' | 'auto',
-  scope: 'cached' | 'all',               // local correctness scope
-  filter: null | { /* DSL or equality */ } | ((record, ctx) => boolean), // predicate is local-only escape hatch
+const remoteView = store.view('default');               // per-view remote store (shared cache)
+const productSearch = remoteView.localView('search');   // per-consumer local view store
+
+await productSearch.setCriteria({
+  scope: 'cached' | 'all',
+  filter: null | { /* DSL or equality */ } | ((record, ctx) => boolean), // escape hatch supported
   sort: [{ field: 'price', dir: 'asc' }],
-  page: { limit: 50 },                   // used by local paging (offset-mode) for remote stores
+  page: { limit: 50 },                   // local paging uses offset mode
   meta: { label: 'Men + 1000-5000' },    // optional debugging/UI metadata
 });
 ```
 
-Predicate (`(record, ctx) => boolean`) is supported as an **escape hatch** for advanced logic:
-- it is treated as **local-only** (remote mode will fall back / be rejected by implementations)
-- it is **not serialized** in `criteriaChanged` payloads
+Notes:
+- Local criteria does **not** mutate the remote view store’s `toJSON()` dataset.
+- Predicate filters are supported as an escape hatch and are **not serialized** in event payloads.
 
