@@ -116,5 +116,14 @@ describe('blinxStore criteria + cache (local mode)', () => {
     // Criteria changes should NOT be emitted on the base store event bus.
     expect(baseEvents.some(e => e?.path?.[0] === EventTypes.criteriaChanged)).toBe(false);
   });
+
+  test('localView mutability can be enabled via options', async () => {
+    const store = makeStore([{ id: '1', category: 'x', price: 1 }], { cacheCompleteness: 'all' });
+    const base = store.collection('default');
+    const ro = base.localView('search');
+    expect(ro.isMutable()).toBe(false);
+    const rw = base.localView('search', { mutable: true });
+    expect(rw.isMutable()).toBe(true);
+  });
 });
 

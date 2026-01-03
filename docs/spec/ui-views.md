@@ -106,6 +106,14 @@ For **custom controls**, `action` supports a tiered approach:
 
 To execute declarative action ids, pass an optional `actionRegistry` (and optionally `actionRunner`) to `blinxForm(...)` / `blinxCollection(...)` / `blinxTable(...)`.
 
+#### Dynamic control state (optional)
+
+For both built-in and custom controls, `visible` and `disabled` may be either:
+- a boolean (static), or
+- a function: `(ctx) => boolean` (dynamic)
+
+This supports cases like disabling destructive actions when a view is read-only, when a filter is active, or when selected records do not meet a condition.
+
 - If `actionRunner` is omitted, Blinx uses a small default runner:
   - resolves `id` from `actionRegistry`
   - runs an optional `validate: []` chain (first failure blocks)
@@ -276,6 +284,17 @@ const collectionView = {
     attrs: { row: { 'data-id': record?.id || '' } }
   }),
 };
+```
+
+### Selection (optional)
+
+Selection is configured on `blinxCollection(...)` / `blinxTable(...)` via the `selection` option. In addition to `mode`, a predicate can be used to disable selection per row:
+
+```js
+selection: {
+  mode: 'multi' | 'single' | 'none',
+  isRowSelectable: (ctx, record, index) => boolean,
+}
 ```
 
 ### Column

@@ -130,7 +130,7 @@ Example:
 
 ```js
 const remoteView = store.view('default');               // per-view remote store (shared cache)
-const productSearch = remoteView.localView('search');   // per-consumer local view store
+const productSearch = remoteView.localView('search');   // per-consumer local view store (read-only by default)
 
 await productSearch.setCriteria({
   scope: 'cached' | 'all',
@@ -144,4 +144,16 @@ await productSearch.setCriteria({
 Notes:
 - Local criteria does **not** mutate the remote view store’s `toJSON()` dataset.
 - Predicate filters are supported as an escape hatch and are **not serialized** in event payloads.
+
+### Mutability
+
+Local views are **read-only by default**. To allow mutations through a local view (proxied to the upstream remote view store), opt in:
+
+```js
+const editableSearch = remoteView.localView('search', { mutable: true });
+editableSearch.isMutable(); // => true
+```
+
+All stores also expose:
+- **`store.isMutable() => boolean`**
 

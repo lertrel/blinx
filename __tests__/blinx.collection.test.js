@@ -229,5 +229,37 @@ describe('blinxCollection', () => {
     // Create should remain available so the user can add the first row.
     expect(btn('Create').disabled).toBe(false);
   });
+
+  test('localView: immutable local view disables create/deleteSelected by default', async () => {
+    const model = { fields: { id: { type: 'string' }, status: { type: 'string' }, version: { type: 'string' } } };
+    const store = blinxStore({
+      model,
+      dataSource: [{ id: '1', status: 'open', version: '1' }],
+      view: {
+        name: 'orders',
+        resource: 'orders',
+        entityType: 'Order',
+        keyField: 'id',
+        versionField: 'version',
+        cache: { completeness: 'loaded', maxEntities: 100 },
+      }
+    });
+    await store.loadFirst();
+
+    const root = document.createElement('div');
+    blinxCollection({
+      root,
+      store,
+      dataView: 'orders',
+      localView: 'search', // read-only local view
+      view: { layout: 'table', columns: [{ field: 'id', label: 'ID' }] },
+      // controls omitted => auto toolbar
+    });
+
+    const toolbar = root.querySelector('.blinx-controls');
+    const btn = (label) => Array.from(toolbar.querySelectorAll('button')).find(b => b.textContent === label);
+    expect(btn('Create').disabled).toBe(true);
+    expect(btn('Delete Selected').disabled).toBe(true);
+  });
 });
 
