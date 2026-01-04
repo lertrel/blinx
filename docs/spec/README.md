@@ -9,8 +9,33 @@ This folder documents the **supported shapes** (syntax) and **semantics** (behav
 Docs:
 
 - [`model.md`](model.md)
-- [`data-views.md`](data-view.md)
-- [`ui-views.md`](ui-view.md)
+- [`data-views.md`](data-views.md)
+- [`ui-views.md`](ui-views.md)
+
+## Spec Index (all schema/DSL surfaces)
+
+Use this as a quick “map” of the declarative shapes Blinx supports:
+
+- **Model schema** (`model.md`)
+  - **field definitions / validation constraints**
+  - **computed fields**: `computed`, `dependsOn`, `compute`
+- **Data view schema** (`data-views.md`)
+  - **remote view config**: `resource/entityType/keyField/versionField/defaultFilter/defaultSort/defaultPage`
+  - **cache strategy**: `cache.{completeness,maxEntities,eviction,fields,persist}` (including `fields.include/exclude` precedence)
+  - **local views**: `remoteView.localView(localViewKey[, { mutable }])`
+  - **local criteria**: `setCriteria({ filter, sort, page, meta })`
+    - **filter DSL**: `and/or`, `{field,op,value}`, plus predicate escape hatch
+- **UI view schema** (`ui-views.md`)
+  - **form view** (`sections/fields`)
+  - **collection/table views** (`layout/columns/item/searchFields/defaultSort`)
+  - **controls spec**: built-in + custom controls, `action`, and dynamic `disabled/visible: (ctx)=>boolean`
+  - **selection config**: `selection.mode` + `selection.isRowSelectable(ctx, record, index)`
+  - **presentation hooks**: `present()` / `rowPresent()` returning `{ attrs: ... }`
+
+Protocol-like shapes (implemented in code, consumed by the store/data sources):
+
+- **DataSource query spec** (`lib/blinx.datasource.js`): `querySpec = { resource, entityType, filter, sort, page, params }`
+- **Mutation op spec** (`lib/blinx.datasource.js`): ops for `create/update/delete` and conflict handling payloads
 
 
 
