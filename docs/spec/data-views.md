@@ -145,6 +145,64 @@ Notes:
 - Local criteria does **not** mutate the remote view store’s `toJSON()` dataset.
 - Predicate filters are supported as an escape hatch and are **not serialized** in event payloads.
 
+### Filter DSL (local criteria)
+
+`criteria.filter` supports four forms:
+
+1) **`null` / `undefined`**  
+   Matches all records.
+
+2) **Predicate function** (escape hatch): `(record, ctx) => boolean`  
+   Runs locally only. Prefer the DSL when you need a serializable filter.
+
+3) **Shallow equality object** (legacy/simple):
+
+```js
+filter: { status: 'open', customerId: 'c1' }
+```
+
+4) **DSL node** (recommended for structured filters):
+
+#### Boolean composition
+
+```js
+filter: { and: [Filter, Filter, ...] }
+filter: { or:  [Filter, Filter, ...] }
+```
+
+#### Field condition
+
+```js
+filter: { field: 'status', op: 'eq', value: 'open' }
+```
+
+If `op` is omitted, it defaults to `eq`.
+
+Supported operators (current implementation):
+- **`eq`** / **`ne`**: strict equality / inequality
+- **`in`**: `value` must be an array; matches when `value.includes(record[field])`
+- **`contains`**: string match (case-insensitive); arrays are joined by `", "` first
+- **`gt`**, **`gte`**, **`lt`**, **`lte`**: numeric comparisons (both sides must coerce to finite numbers)
+- **`between`**: `value` must be `[min, max]` (order doesn’t matter)
+
+Examples:
+
+```js
+// Orders in a set of statuses
+filter: { field: 'status', op: 'in', value: ['open', 'pending'] }
+
+// Price between 1000 and 5000
+filter: { field: 'price', op: 'between', value: [1000, 5000] }
+
+// Combined
+filter: {
+  and: [
+    { field: 'status', op: 'in', value: ['open', 'pending'] },
+    { field: 'total', op: 'gte', value: 100 },
+  ]
+}
+```
+
 ### Mutability
 
 Local views are **read-only by default**. To allow mutations through a local view (proxied to the upstream remote view store), opt in:
