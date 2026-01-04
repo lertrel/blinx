@@ -125,5 +125,29 @@ describe('blinxStore criteria + cache (local mode)', () => {
     const rw = base.localView('search', { mutable: true });
     expect(rw.isMutable()).toBe(true);
   });
+
+  test('immutable localView commit/reset do not recurse and emit events', async () => {
+    const store = makeStore([
+      { id: '1', category: 'mens', price: 10 },
+      { id: '2', category: 'womens', price: 20 },
+    ], { cacheCompleteness: 'all' });
+
+    const lv = store.collection('default').localView('search'); // read-only by default
+    const events = [];
+    lv.subscribe(ev => events.push(ev));
+
+    await lv.setCriteria({
+      scope: 'all',
+      filter: { field: 'category', op: 'eq', value: 'mens' },
+      page: { limit: 50 },
+    });
+
+    events.length = 0;
+    expect(() => lv.commit()).not.toThrow();
+    expect(() => lv.reset()).not.toThrow();
+
+    expect(events.some(e => e?.path?.[0] === EventTypes.commit)).toBe(true);
+    expect(events.some(e => e?.path?.[0] === EventTypes.reset)).toBe(true);
+  });
 });
 
