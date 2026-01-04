@@ -106,6 +106,10 @@ views: {
 Notes:
 - This cache is **deduped by id** (keyed by `keyField`).
 - Local criteria is only guaranteed correct over the cached subset unless `completeness: 'all'` is used (and the warm succeeds).
+- **Fields precedence**:
+  - if `fields.include` is provided and non-empty, Blinx caches **only** those fields and **ignores** `fields.exclude`
+  - otherwise, Blinx caches all fields except those in `fields.exclude`
+  - note: avoid setting both; if both are provided, **include wins**
 
 ## Multi-view manager API surface (important bits)
 
