@@ -114,6 +114,33 @@ For both built-in and custom controls, `visible` and `disabled` may be either:
 
 This supports cases like disabling destructive actions when a view is read-only, when a filter is active, or when selected records do not meet a condition.
 
+Example: disable “Delete Selected” unless all selected orders are deletable:
+
+```js
+controls: {
+  deleteSelectedButton: {
+    label: 'Delete Selected',
+    // Keep the built-in action; only gate availability.
+    disabled: (ctx) => {
+      // Built-in guard: read-only views should not mutate.
+      if (!ctx.store?.isMutable?.()) return true;
+
+      const state = ctx.getState?.();
+      const selected = state?.selected || new Set();
+      const items = state?.items || [];
+      if (selected.size === 0) return true;
+
+      for (const idx of selected) {
+        const row = items.find(x => x.index === idx);
+        const status = row?.record?.status;
+        if (status === 'complete' || status === 'cancelled') return true;
+      }
+      return false;
+    },
+  },
+}
+```
+
 - If `actionRunner` is omitted, Blinx uses a small default runner:
   - resolves `id` from `actionRegistry`
   - runs an optional `validate: []` chain (first failure blocks)
@@ -294,6 +321,19 @@ Selection is configured on `blinxCollection(...)` / `blinxTable(...)` via the `s
 selection: {
   mode: 'multi' | 'single' | 'none',
   isRowSelectable: (ctx, record, index) => boolean,
+}
+```
+
+Example: disallow selecting orders that are complete/cancelled:
+
+```js
+selection: {
+  mode: 'multi',
+  isRowSelectable: (ctx, record) => {
+    void ctx;
+    const s = record?.status;
+    return s !== 'complete' && s !== 'cancelled';
+  }
 }
 ```
 

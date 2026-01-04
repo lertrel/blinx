@@ -157,3 +157,25 @@ editableSearch.isMutable(); // => true
 All stores also expose:
 - **`store.isMutable() => boolean`**
 
+### Example: Orders search local view (search + delete-from-results)
+
+This pattern supports “search over cached data, but still allow deleting from the results” (email-like behavior):
+
+```js
+const orders = store.view('orders'); // remote view store (shared cache)
+
+// Local view is its own event bus + criteria, but mutations proxy to `orders` when mutable:true.
+const search = orders.localView('search', { mutable: true });
+
+await search.setCriteria({
+  filter: { field: 'status', op: 'in', value: ['open', 'pending'] },
+  page: { limit: 50 },
+});
+
+// Mutations can be invoked on the local view (proxied by id+version):
+// - delete selected orders found by search
+// - update a field from the search result
+//
+// (UI should still gate these actions via view.controls disabled(ctx) predicates.)
+```
+
