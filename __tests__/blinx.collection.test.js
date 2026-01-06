@@ -261,5 +261,137 @@ describe('blinxCollection', () => {
     expect(btn('Create').disabled).toBe(true);
     expect(btn('Delete Selected').disabled).toBe(true);
   });
+
+  test('api.setSelection(asBaseline) + api.resetSelection restores selection baseline', () => {
+    const model = { fields: { name: { type: 'string' } } };
+    const store = blinxStore([{ name: 'A' }, { name: 'B' }], model);
+    const root = document.createElement('div');
+
+    const { api } = blinxCollection({
+      root,
+      store,
+      view: { layout: 'table', columns: [{ field: 'name', label: 'Name' }] },
+      paging: { pageSize: 20 },
+      selection: { mode: 'multi' },
+      controls: {}, // suppress toolbar noise
+    });
+
+    // Baseline = all selected.
+    api.setSelection([0, 1], { asBaseline: true });
+
+    let cbs = root.querySelectorAll('tbody tr input[type="checkbox"]');
+    expect(cbs[0].checked).toBe(true);
+    expect(cbs[1].checked).toBe(true);
+
+    // Deselect one.
+    cbs[0].checked = false;
+    cbs[0].dispatchEvent(new Event('change', { bubbles: true }));
+
+    cbs = root.querySelectorAll('tbody tr input[type="checkbox"]');
+    expect(cbs[0].checked).toBe(false);
+    expect(cbs[1].checked).toBe(true);
+
+    // Reset back to baseline.
+    api.resetSelection();
+    cbs = root.querySelectorAll('tbody tr input[type="checkbox"]');
+    expect(cbs[0].checked).toBe(true);
+    expect(cbs[1].checked).toBe(true);
+  });
+
+  test('view.recordControls renders per-row buttons and does not toggle row selection', async () => {
+    const model = { fields: { name: { type: 'string' } } };
+    const store = blinxStore([{ name: 'A' }], model);
+    const root = document.createElement('div');
+    const onItemClick = jest.fn();
+    const onEdit = jest.fn();
+
+    blinxCollection({
+      root,
+      store,
+      view: {
+        layout: 'table',
+        columns: [{ field: 'name', label: 'Name' }],
+        recordControls: {
+          edit: { label: 'Edit', action: () => onEdit() },
+        },
+      },
+      paging: { pageSize: 20 },
+      onItemClick,
+      controls: {}, // keep DOM small
+    });
+
+    const cb = root.querySelector('tbody tr input[type="checkbox"]');
+    expect(cb.checked).toBe(false);
+
+    const editBtn = Array.from(root.querySelectorAll('tbody tr button')).find(b => b.textContent === 'Edit');
+    expect(editBtn).toBeTruthy();
+    editBtn.click();
+    await Promise.resolve();
+
+    expect(onEdit).toHaveBeenCalledTimes(1);
+    expect(onItemClick).toHaveBeenCalledTimes(0);
+    expect(root.querySelector('tbody tr input[type="checkbox"]').checked).toBe(false);
+  });
+
+  test('view.recordControls supports multiple actions with visible/disabled guards', async () => {
+    const model = { fields: { name: { type: 'string' } } };
+    const store = blinxStore([{ name: 'A' }], model);
+    const root = document.createElement('div');
+    const onItemClick = jest.fn();
+    const onEdit = jest.fn();
+    const onDelete = jest.fn();
+
+    blinxCollection({
+      root,
+      store,
+      view: {
+        layout: 'table',
+        columns: [{ field: 'name', label: 'Name' }],
+        recordControls: {
+          edit: { label: 'Edit', action: () => onEdit() },
+          delete: {
+            label: 'Delete',
+            disabled: (_ctx) => true,
+            action: () => onDelete(),
+          },
+          hidden: {
+            label: 'Hidden',
+            visible: () => false,
+            action: () => { throw new Error('should not run'); },
+          },
+        },
+      },
+      paging: { pageSize: 20 },
+      onItemClick,
+      controls: {},
+    });
+
+    // Should render Edit + Delete only (Hidden suppressed)
+    const row = root.querySelector('tbody tr');
+    const buttons = Array.from(row.querySelectorAll('button'));
+    const labels = buttons.map(b => b.textContent);
+    expect(labels).toContain('Edit');
+    expect(labels).toContain('Delete');
+    expect(labels).not.toContain('Hidden');
+
+    const editBtn = buttons.find(b => b.textContent === 'Edit');
+    const deleteBtn = buttons.find(b => b.textContent === 'Delete');
+    expect(editBtn.disabled).toBe(false);
+    expect(deleteBtn.disabled).toBe(true);
+
+    // Clicking disabled button does nothing
+    deleteBtn.click();
+    await Promise.resolve();
+    expect(onDelete).toHaveBeenCalledTimes(0);
+
+    // Clicking edit triggers handler but not row click nor selection toggle
+    const cb = row.querySelector('input[type="checkbox"]');
+    expect(cb.checked).toBe(false);
+    editBtn.click();
+    await Promise.resolve();
+    expect(onEdit).toHaveBeenCalledTimes(1);
+    expect(onItemClick).toHaveBeenCalledTimes(0);
+    expect(row.querySelector('input[type="checkbox"]').checked).toBe(false);
+  });
 });
 
