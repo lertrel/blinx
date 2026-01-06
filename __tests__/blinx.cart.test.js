@@ -57,6 +57,7 @@ describe('blinxCart', () => {
 
     expect(root.querySelectorAll('input[type="checkbox"]').length).toBe(0);
     expect(root.textContent).toContain('➖');
+    expect(Array.from(root.querySelectorAll('button')).some(b => b.textContent === 'Reset')).toBe(false);
   });
 
   test('editable=true shows edit icon and executes record control action', async () => {
