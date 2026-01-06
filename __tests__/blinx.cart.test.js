@@ -106,5 +106,69 @@ describe('blinxCart', () => {
     store.addRecord({ name: 'B' });
     expect(root.querySelectorAll('.blx-cart__row').length).toBe(2);
   });
+
+  test('supports multiple record controls (custom) and executes correct actions', async () => {
+    const model = { fields: { name: { type: 'string' } } };
+    const root = document.createElement('div');
+    const editHandler = jest.fn();
+    const deleteHandler = jest.fn();
+
+    blinxCart({
+      root,
+      model,
+      labelField: 'name',
+      data: [{ name: 'A' }],
+      editable: false,
+      recordControls: {
+        edit: { label: 'Edit', action: 'cart.edit' },
+        delete: { label: 'Delete', action: 'cart.delete' },
+        hidden: { label: 'Hidden', visible: () => false, action: 'cart.hidden' },
+      },
+      actionRegistry: {
+        'cart.edit': { handler: () => editHandler() },
+        'cart.delete': { handler: () => deleteHandler() },
+        'cart.hidden': { handler: () => { throw new Error('should not run'); } },
+      },
+    });
+
+    const btn = (label) => Array.from(root.querySelectorAll('button')).find(b => b.textContent === label);
+    expect(btn('Edit')).toBeTruthy();
+    expect(btn('Delete')).toBeTruthy();
+    expect(btn('Hidden')).toBeFalsy();
+
+    btn('Edit').click();
+    btn('Delete').click();
+    await Promise.resolve();
+
+    expect(editHandler).toHaveBeenCalledTimes(1);
+    expect(deleteHandler).toHaveBeenCalledTimes(1);
+  });
+
+  test('getSelected() returns only selected items (some selected, none selected)', () => {
+    const model = { fields: { name: { type: 'string' } } };
+    const root = document.createElement('div');
+
+    const { cartApi } = blinxCart({
+      root,
+      model,
+      labelField: 'name',
+      data: [{ name: 'A' }, { name: 'B' }, { name: 'C' }],
+      selectable: true,
+    });
+
+    // Deselect B only.
+    const cbs = Array.from(root.querySelectorAll('input[type="checkbox"]'));
+    expect(cbs.length).toBe(3);
+    cbs[1].checked = false;
+    cbs[1].dispatchEvent(new Event('change', { bubbles: true }));
+    expect(cartApi.getSelected()).toEqual([{ name: 'A' }, { name: 'C' }]);
+
+    // Deselect all.
+    for (const cb of Array.from(root.querySelectorAll('input[type="checkbox"]'))) {
+      cb.checked = false;
+      cb.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+    expect(cartApi.getSelected()).toEqual([]);
+  });
 });
 
