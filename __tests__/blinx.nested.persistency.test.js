@@ -229,5 +229,35 @@ describe('Nested spec v0: action facade collection helpers', () => {
     expect(childDS.calls.lastOps[0].entity.id).toBe('p1');
     expect(parent.getRecord(0).products).toEqual(['p2']);
   });
+
+  test('collection removeWhere filters entries using predicate and updates parent', () => {
+    const EmbeddedProductModel = { id: 'EmbeddedProduct', fields: { title: { type: 'string' } } };
+    const EmbeddedOrderModel = {
+      id: 'Order',
+      fields: {
+        id: { type: 'string' },
+        items: { type: 'collection', model: EmbeddedProductModel, embedded: true },
+      },
+    };
+    const parent = blinxStore(
+      [{ id: 'o1', items: [{ title: 'keep-a' }, { title: 'drop-me' }, { title: 'keep-b' }] }],
+      EmbeddedOrderModel
+    );
+    const facade = createActionFacade({
+      store: parent,
+      getRecord: () => parent.getRecord(0),
+      getRecordIndex: () => 0,
+      strict: true,
+    });
+
+    const fieldApi = facade.model().get('items');
+    const returnedApi = fieldApi.items().removeWhere((handle) => {
+      // Ensure predicate sees the rich handle by reading fields through it.
+      return handle.get('title') === 'drop-me';
+    });
+
+    expect(returnedApi).toBe(fieldApi);
+    expect(parent.getRecord(0).items).toEqual([{ title: 'keep-a' }, { title: 'keep-b' }]);
+  });
 });
 
