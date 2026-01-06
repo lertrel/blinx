@@ -37,6 +37,34 @@ Outstanding work that should be tackled in a follow-up iteration:
   - Hook the new UI controls to the action façade so they invoke `model().get(...).patch/delete` instead of touching store internals.
   - Surface journey-specific errors through `ctx.getIssues()` and UI notifications.
 
+Here’s a sprint-friendly breakdown for **Aspect 2 (UX / presentation)** proposal. Each iteration clusters related user stories so you can track progress in smaller, reviewable batches.
+
+---
+
+### Iteration 1 – Relation Controls & Hooks
+- `blinxForm`/`blinxCollection` schema updates: add `relation.mode: 'inline' | 'journey'` plus per-field overrides (`pick`, `edit`, `delete` flags).
+- Wire new relation config to the action façade: ensure controls call `model().get(field)` handles rather than touching stores directly.
+- Surface façade errors in UI actions (`ctx.getIssues()` → toast/banner) so journey failures are visible.
+
+### Iteration 2 – Journey Infrastructure
+- Implement picker/edit “journeys” as reusable components (modal/drawer UIs) driven by the relation config.
+- Build journey resolution pipeline (child store lookup via BlinxApp, local view selection, cart support for multi-select).
+- Add tests around journey flows (mock child store save, verify `flush()` order, ensure carts clear).
+
+### Iteration 3 – Presentation & Preview
+- Inline SNM preview rendering: show label/badge for id fields using cached `ref.labelField`/`previewFields`.
+- Embed unlink/delete controls with clear affordances (icons, confirmations) respecting ENM/SNM policies.
+- Ensure collection rows reflect relationship updates instantly (e.g., remove dangling ids after child delete).
+
+### Iteration 4 – Polish & Docs
+- Expand `docs/spec/nested.md` with a “Future Work / UX semantics” section detailing the new controls, their relation to `action-facade.md`, and journey behavior.
+- Update `docs/spec/ui-views.md` with examples of the new relation config and screenshots/wireframes if available.
+- Add end-to-end coverage (Playwright) for a representative form + collection that exercises pick/edit/delete journeys.
+
+Each iteration builds on the previous specs (`action-facade.md`, `blinx-app.md`, `wip.md`), so we keep momentum while delivering reviewable chunks.
+
+---
+
 ## How to keep context for the next pass
 
 1. **Spec breadcrumbs**
@@ -49,3 +77,4 @@ Outstanding work that should be tackled in a follow-up iteration:
    - When implementing Aspect 2, expand the existing Jest suites (persistency + helper tests) and add UI-level tests once picker/edit journeys exist.
 
 With these breadcrumbs (spec docs + this WIP log + a follow-up issue), the next iteration can rehydrate the context quickly and focus on shipping the presentation-layer pieces.*** End Patch
+
