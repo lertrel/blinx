@@ -11,6 +11,7 @@ Docs:
 - [`model.md`](model.md)
 - [`data-views.md`](data-views.md)
 - [`ui-views.md`](ui-views.md)
+- [`action-facade.md`](action-facade.md)
 - [`nested.md`](nested.md)
 - [`blinx-app.md`](blinx-app.md)
 
@@ -33,6 +34,9 @@ Use this as a quick “map” of the declarative shapes Blinx supports:
   - **controls spec**: built-in + custom controls, `action`, and dynamic `disabled/visible: (ctx)=>boolean`
   - **selection config**: `selection.mode` + `selection.isRowSelectable(ctx, record, index)`
   - **presentation hooks**: `present()` / `rowPresent()` returning `{ attrs: ... }`
+- **Action facade** (`action-facade.md`)
+  - `createActionFacade` inputs
+  - `ctx.model()`, `FieldHandle`, `CollectionHandle`, SNM vs ENM semantics, `flush()`
 - **Nested models** (`nested.md`)
   - **ENM vs SNM**: `embedded: true|false`
   - **SNM refs**: `ref.keyField/ref.labelField` and id-only persistence
