@@ -325,6 +325,58 @@
 .blx-table tbody tr:hover { background: color-mix(in srgb, var(--blx-surface), white 12%); }
 
 /* =========================================================
+  CART (custom collection layout)
+========================================================= */
+.blx-cart {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.blx-cart__row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid color-mix(in srgb, var(--blx-border), transparent 30%);
+  border-radius: var(--blx-radius);
+  background: var(--blx-surface);
+}
+
+.blx-cart__row:hover {
+  background: color-mix(in srgb, var(--blx-surface), white 8%);
+}
+
+.blx-cart__prefix {
+  width: 1.5rem;
+  display: inline-flex;
+  justify-content: center;
+}
+
+.blx-cart__label {
+  flex: 1;
+}
+
+.blx-cart__controls {
+  display: inline-flex;
+  gap: 0.25rem;
+}
+
+.blx-cart__control {
+  border: 1px solid var(--blx-border);
+  background: color-mix(in srgb, var(--blx-surface), white 4%);
+  color: var(--blx-text);
+  border-radius: 0.5rem;
+  padding: 0.25rem 0.5rem;
+  cursor: pointer;
+}
+
+.blx-cart__row--deselected .blx-cart__label {
+  text-decoration: line-through;
+  opacity: 0.7;
+}
+
+/* =========================================================
   UTILITIES
 ========================================================= */
 .blx-text-muted { color: var(--blx-muted); }

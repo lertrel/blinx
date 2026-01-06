@@ -337,6 +337,31 @@ selection: {
 }
 ```
 
+### Record controls (optional)
+
+Collection views may optionally declare **per-record controls** via `view.recordControls`.
+
+Notes:
+- Controls are **rendered by layouts that support them** (currently built-in `table`, and any custom layout that chooses to use them).
+- `action` supports the same action shapes as `view.controls` (function / string id / `{id,payload}`).
+- `visible` / `disabled` may be booleans or functions `(ctx) => boolean`.
+
+Example:
+
+```js
+{
+  layout: 'table',
+  columns: [{ field: 'name', label: 'Name' }],
+  recordControls: {
+    edit: {
+      label: '⚙️',
+      action: 'blinx.global.journeys.edit-single-model',
+      disabled: (ctx) => !ctx.record?.id,
+    },
+  },
+}
+```
+
 ### Column
 
 ```js

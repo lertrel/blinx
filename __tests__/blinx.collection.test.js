@@ -261,5 +261,76 @@ describe('blinxCollection', () => {
     expect(btn('Create').disabled).toBe(true);
     expect(btn('Delete Selected').disabled).toBe(true);
   });
+
+  test('api.setSelection(asBaseline) + api.resetSelection restores selection baseline', () => {
+    const model = { fields: { name: { type: 'string' } } };
+    const store = blinxStore([{ name: 'A' }, { name: 'B' }], model);
+    const root = document.createElement('div');
+
+    const { api } = blinxCollection({
+      root,
+      store,
+      view: { layout: 'table', columns: [{ field: 'name', label: 'Name' }] },
+      paging: { pageSize: 20 },
+      selection: { mode: 'multi' },
+      controls: {}, // suppress toolbar noise
+    });
+
+    // Baseline = all selected.
+    api.setSelection([0, 1], { asBaseline: true });
+
+    let cbs = root.querySelectorAll('tbody tr input[type="checkbox"]');
+    expect(cbs[0].checked).toBe(true);
+    expect(cbs[1].checked).toBe(true);
+
+    // Deselect one.
+    cbs[0].checked = false;
+    cbs[0].dispatchEvent(new Event('change', { bubbles: true }));
+
+    cbs = root.querySelectorAll('tbody tr input[type="checkbox"]');
+    expect(cbs[0].checked).toBe(false);
+    expect(cbs[1].checked).toBe(true);
+
+    // Reset back to baseline.
+    api.resetSelection();
+    cbs = root.querySelectorAll('tbody tr input[type="checkbox"]');
+    expect(cbs[0].checked).toBe(true);
+    expect(cbs[1].checked).toBe(true);
+  });
+
+  test('view.recordControls renders per-row buttons and does not toggle row selection', async () => {
+    const model = { fields: { name: { type: 'string' } } };
+    const store = blinxStore([{ name: 'A' }], model);
+    const root = document.createElement('div');
+    const onItemClick = jest.fn();
+    const onEdit = jest.fn();
+
+    blinxCollection({
+      root,
+      store,
+      view: {
+        layout: 'table',
+        columns: [{ field: 'name', label: 'Name' }],
+        recordControls: {
+          edit: { label: 'Edit', action: () => onEdit() },
+        },
+      },
+      paging: { pageSize: 20 },
+      onItemClick,
+      controls: {}, // keep DOM small
+    });
+
+    const cb = root.querySelector('tbody tr input[type="checkbox"]');
+    expect(cb.checked).toBe(false);
+
+    const editBtn = Array.from(root.querySelectorAll('tbody tr button')).find(b => b.textContent === 'Edit');
+    expect(editBtn).toBeTruthy();
+    editBtn.click();
+    await Promise.resolve();
+
+    expect(onEdit).toHaveBeenCalledTimes(1);
+    expect(onItemClick).toHaveBeenCalledTimes(0);
+    expect(root.querySelector('tbody tr input[type="checkbox"]').checked).toBe(false);
+  });
 });
 
