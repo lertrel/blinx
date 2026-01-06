@@ -162,3 +162,72 @@ describe('Nested spec v0: action facade SNM patch/delete', () => {
   });
 });
 
+describe('Nested spec v0: action facade collection helpers', () => {
+  const ProductModel = { id: 'Product', fields: { id: { type: 'string' }, title: { type: 'string' } } };
+  const OrderModel = {
+    id: 'Order',
+    fields: {
+      id: { type: 'string' },
+      products: { type: 'collection', model: ProductModel, embedded: false, ref: { keyField: 'id' } },
+    },
+  };
+
+  function registerProductStore(dataSource) {
+    registerBlinxApp({
+      stores: {
+        Product: {
+          model: ProductModel,
+          dataSource,
+          views: { default: { resource: 'products', entityType: 'Product', keyField: 'id', versionField: 'version' } },
+          defaultView: 'default',
+        },
+      },
+    });
+  }
+
+  test('collection item handle resolves latest snapshot before SNM patch', async () => {
+    const childDS = createCapturingDataSource({ Product: [{ id: 'p1', title: 'Alpha' }, { id: 'p2', title: 'Beta' }] });
+    registerProductStore(childDS);
+    const parent = blinxStore([{ id: 'o1', products: ['p1'] }], OrderModel);
+    const facade = createActionFacade({
+      store: parent,
+      getRecord: () => parent.getRecord(0),
+      getRecordIndex: () => 0,
+      strict: true,
+    });
+
+    const itemsApi = facade.model().get('products').items();
+    const firstHandle = itemsApi.item(0);
+    parent.setField(0, 'products', ['p2']); // mutate parent after handle capture
+
+    firstHandle.patch({ title: 'Gamma' });
+    await facade.flush();
+
+    expect(childDS.calls.mutate).toBe(1);
+    expect(childDS.calls.lastOps[0].type).toBe('update');
+    expect(childDS.calls.lastOps[0].entity.id).toBe('p2');
+    expect(childDS.calls.lastOps[0].patch.title).toBe('Gamma');
+  });
+
+  test('collection item delete removes parent reference after child deletion', async () => {
+    const childDS = createCapturingDataSource({ Product: [{ id: 'p1' }, { id: 'p2' }] });
+    registerProductStore(childDS);
+    const parent = blinxStore([{ id: 'o1', products: ['p1', 'p2'] }], OrderModel);
+    const facade = createActionFacade({
+      store: parent,
+      getRecord: () => parent.getRecord(0),
+      getRecordIndex: () => 0,
+      strict: true,
+    });
+
+    const itemsApi = facade.model().get('products').items();
+    itemsApi.item(0).delete();
+    await facade.flush();
+
+    expect(childDS.calls.mutate).toBe(1);
+    expect(childDS.calls.lastOps[0].type).toBe('delete');
+    expect(childDS.calls.lastOps[0].entity.id).toBe('p1');
+    expect(parent.getRecord(0).products).toEqual(['p2']);
+  });
+});
+
