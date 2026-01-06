@@ -1,6 +1,7 @@
 /** @jest-environment jsdom */
 
 import { blinxCart } from '../lib/blinx.cart.js';
+import { blinxStore } from '../lib/blinx.store.js';
 
 describe('blinxCart', () => {
   test('defaults to all-selected and supports reset selection', async () => {
@@ -87,6 +88,23 @@ describe('blinxCart', () => {
     expect(editHandler).toHaveBeenCalledTimes(1);
     // Clicking edit icon must NOT toggle selection
     expect(root.querySelector('input[type="checkbox"]').checked).toBe(true);
+  });
+
+  test('accepts external store so external actions can add items', () => {
+    const model = { fields: { name: { type: 'string' } } };
+    const store = blinxStore([{ name: 'A' }], model);
+    const root = document.createElement('div');
+
+    blinxCart({
+      root,
+      store,
+      labelField: 'name',
+      // model optional when store is provided
+    });
+
+    expect(root.querySelectorAll('.blx-cart__row').length).toBe(1);
+    store.addRecord({ name: 'B' });
+    expect(root.querySelectorAll('.blx-cart__row').length).toBe(2);
   });
 });
 
