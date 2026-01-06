@@ -138,3 +138,30 @@ In the example above:
 - `item.delete()` calls `deleteById` on the child store and immediately removes the deleted id from the parent’s `products` field to keep local state consistent.
 
 Use this facade inside `action` handlers for forms/collections to avoid reaching into low-level store methods and to ensure nested semantics are applied consistently.
+
+## 8) Custom actions in `blinxForm` and `blinxCollection`
+
+Both `blinxForm` and `blinxCollection` expose the action facade to custom controls/actions so developers can use the API without manual wiring:
+
+- `blinxForm` action context includes:
+  ```js
+  {
+    getRecord,       // current form record
+    model,           // facade.model()
+    flush,           // facade.flush
+    getIssues,       // facade.getIssues
+    setStatus,       // optional status reporter
+  }
+  ```
+
+- `blinxCollection` yields an action context per row/selection, supplying:
+  ```js
+  {
+    getRecord(recordIndex),
+    model(record?),  // defaults to the row
+    flush,
+    getIssues,
+  }
+  ```
+
+Custom action definitions (e.g., `controls: [{ type: 'action', action: async (ctx) => { ... } }]`) can call `ctx.model().get('field')` to mutate fields, `ctx.flush()` to persist, and inspect `ctx.getIssues()` for non-fatal warnings. Because these contexts delegate to `createActionFacade` internally, SNM-specific behavior (child store patch/delete, lazy store resolution, issue tracking) works identically in forms, collections, and standalone action runners.

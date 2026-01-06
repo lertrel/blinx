@@ -37,6 +37,7 @@ Use this as a quick “map” of the declarative shapes Blinx supports:
 - **Action facade** (`action-facade.md`)
   - `createActionFacade` inputs
   - `ctx.model()`, `FieldHandle`, `CollectionHandle`, SNM vs ENM semantics, `flush()`
+  - Custom action integration (`blinxForm`, `blinxCollection`)
 - **Nested models** (`nested.md`)
   - **ENM vs SNM**: `embedded: true|false`
   - **SNM refs**: `ref.keyField/ref.labelField` and id-only persistence
