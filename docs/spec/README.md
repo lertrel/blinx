@@ -12,6 +12,7 @@ Docs:
 - [`data-views.md`](data-views.md)
 - [`ui-views.md`](ui-views.md)
 - [`nested.md`](nested.md)
+- [`blinx-app.md`](blinx-app.md)
 
 ## Spec Index (all schema/DSL surfaces)
 
@@ -36,6 +37,9 @@ Use this as a quick “map” of the declarative shapes Blinx supports:
   - **ENM vs SNM**: `embedded: true|false`
   - **SNM refs**: `ref.keyField/ref.labelField` and id-only persistence
   - **nestedJourneys** resolution and action facade semantics
+- **App registry** (`blinx-app.md`)
+  - **`registerBlinxApp` schema**: `{ stores: { [modelKey]: { store } | blinxStoreConfig } }`
+  - **`getBaseStore` semantics**: lazy construction, cache invalidation, SNM requirements
 
 Protocol-like shapes (implemented in code, consumed by the store/data sources):
 
