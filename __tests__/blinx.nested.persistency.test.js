@@ -92,6 +92,41 @@ describe('Nested spec v0: SNM normalization (persist + diff)', () => {
     expect(ds.calls.lastOps[0].type).toBe('create');
     expect(ds.calls.lastOps[0].data.customer).toBe('c3');
   });
+
+  test('updateById ignores SNM label-only changes for in-page records', async () => {
+    const ds = createCapturingDataSource({ Order: [{ id: 'o1', customer: { id: 'c1', name: 'Alice' } }] });
+    const store = blinxStore({
+      model: OrderModel,
+      dataSource: ds,
+      views: { default: { resource: 'orders', entityType: 'Order', keyField: 'id', versionField: 'version' } },
+      defaultView: 'default',
+    });
+
+    await store.loadFirst();
+    store.updateById('o1', { customer: { id: 'c1', name: 'Alice v2' } });
+    await store.save();
+
+    expect(ds.calls.mutate).toBe(0);
+  });
+
+  test('updateById enqueues SNM change when id differs', async () => {
+    const ds = createCapturingDataSource({ Order: [{ id: 'o1', customer: { id: 'c1', name: 'Alice' } }] });
+    const store = blinxStore({
+      model: OrderModel,
+      dataSource: ds,
+      views: { default: { resource: 'orders', entityType: 'Order', keyField: 'id', versionField: 'version' } },
+      defaultView: 'default',
+    });
+
+    await store.loadFirst();
+    store.updateById('o1', { customer: { id: 'c2', name: 'Zed' } });
+    await store.save();
+
+    expect(ds.calls.mutate).toBe(1);
+    expect(ds.calls.lastOps).toHaveLength(1);
+    expect(ds.calls.lastOps[0].type).toBe('update');
+    expect(ds.calls.lastOps[0].patch.customer).toBe('c2');
+  });
 });
 
 describe('Nested spec v0: action facade SNM patch/delete', () => {
