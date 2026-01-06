@@ -11,6 +11,7 @@ Docs:
 - [`model.md`](model.md)
 - [`data-views.md`](data-views.md)
 - [`ui-views.md`](ui-views.md)
+- [`nested.md`](nested.md)
 
 ## Spec Index (all schema/DSL surfaces)
 
@@ -31,6 +32,10 @@ Use this as a quick “map” of the declarative shapes Blinx supports:
   - **controls spec**: built-in + custom controls, `action`, and dynamic `disabled/visible: (ctx)=>boolean`
   - **selection config**: `selection.mode` + `selection.isRowSelectable(ctx, record, index)`
   - **presentation hooks**: `present()` / `rowPresent()` returning `{ attrs: ... }`
+- **Nested models** (`nested.md`)
+  - **ENM vs SNM**: `embedded: true|false`
+  - **SNM refs**: `ref.keyField/ref.labelField` and id-only persistence
+  - **nestedJourneys** resolution and action facade semantics
 
 Protocol-like shapes (implemented in code, consumed by the store/data sources):
 
