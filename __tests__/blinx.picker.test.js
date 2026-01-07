@@ -128,5 +128,37 @@ describe('blinxPicker', () => {
     // API getSelected matches the same.
     expect(pickerApi.getSelected()).toEqual([{ id: 'b', name: 'B' }]);
   });
+
+  test('picker-level status: reset sets status and confirm failure shows error', async () => {
+    const model = { fields: { id: { type: 'string' }, name: { type: 'string' } } };
+    const childStore = blinxStore([{ id: 'a', name: 'A' }], model);
+    const root = document.createElement('div');
+
+    const onConfirm = jest.fn(() => { throw new Error('boom'); });
+
+    blinxPicker({
+      root,
+      childStore,
+      selectionMode: 'multiple',
+      keyField: 'id',
+      labelField: 'name',
+      views: {
+        table: { columns: [{ field: 'name', label: 'Name' }] },
+      },
+      onConfirm,
+    });
+
+    const status = () => root.querySelector('.blinx-picker__status')?.textContent || '';
+
+    // Reset should set a friendly status message.
+    byText(root, 'Reset')[0].click();
+    await Promise.resolve();
+    expect(status()).toBe('Reset done.');
+
+    // A failing confirm should show an error status.
+    byText(root, 'Confirm')[0].click();
+    await Promise.resolve();
+    expect(status()).toBe('Confirm failed.');
+  });
 });
 
