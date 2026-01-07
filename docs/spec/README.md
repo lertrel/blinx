@@ -12,6 +12,7 @@ Docs:
 - [`data-views.md`](data-views.md)
 - [`ui-views.md`](ui-views.md)
 - [`action-facade.md`](action-facade.md)
+- [`notifier.md`](notifier.md)
 - [`nested.md`](nested.md)
 - [`blinx-app.md`](blinx-app.md)
 

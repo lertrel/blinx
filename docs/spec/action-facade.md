@@ -151,6 +151,7 @@ Both `blinxForm` and `blinxCollection` expose the action facade to custom contro
     flush,           // facade.flush
     getIssues,       // facade.getIssues
     setStatus,       // optional status reporter
+    notify,          // ctx.notify(messageOrIssues[, fallback])
   }
   ```
 
@@ -161,7 +162,31 @@ Both `blinxForm` and `blinxCollection` expose the action facade to custom contro
     model(record?),  // defaults to the row
     flush,
     getIssues,
+    notify,          // ctx.notify(messageOrIssues[, fallback])
   }
   ```
+
+### 8.1 Issue reporting (`ctx.getIssues()` → notifier)
+
+Facade operations may report non-fatal issues (especially in `strict: false` mode). In forms/collections:
+
+- Custom actions can still inspect issues manually via `ctx.getIssues()`.
+- Additionally, Blinx runs a **post-action hook**: after a custom action completes successfully, if `ctx.getIssues()` contains entries, Blinx will surface them through the centralized notifier mechanism (see [`notifier.md`](notifier.md)). If no notifier implementation is registered, Blinx falls back to the component’s built-in status channel (`setStatus(...)`).
+
+### 8.2 User-intent notifications (`ctx.notify(...)`)
+
+Custom actions often need to emit intentional UX messages that are not “facade issues” (e.g., “Copied”, “Export started”).
+
+Use `ctx.notify(...)` rather than importing the global notifier directly:
+
+```js
+action: async (ctx) => {
+  ctx.notify('Export started');
+  // ... do work ...
+  ctx.notify('Export finished');
+}
+```
+
+`ctx.notify(messageOrIssues[, fallback])` is a thin wrapper over the centralized notifier. When no notifier implementation is registered, it defaults to a best-effort fallback using the component’s `setStatus(...)` channel.
 
 Custom action definitions (e.g., `controls: [{ type: 'action', action: async (ctx) => { ... } }]`) can call `ctx.model().get('field')` to mutate fields, `ctx.flush()` to persist, and inspect `ctx.getIssues()` for non-fatal warnings. Because these contexts delegate to `createActionFacade` internally, SNM-specific behavior (child store patch/delete, lazy store resolution, issue tracking) works identically in forms, collections, and standalone action runners.
