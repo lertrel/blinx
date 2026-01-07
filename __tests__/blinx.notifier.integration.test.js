@@ -22,6 +22,39 @@ describe('Notifier post-action hook (forms/collections)', () => {
     Notifier.set(null);
   });
 
+  test('blinxForm: custom action can call ctx.notify() (no Notifier import)', async () => {
+    const model = { fields: { name: { type: 'string' } } };
+    const store = blinxStore([{ name: 'A' }], model);
+    const root = document.createElement('div');
+
+    const notify = jest.fn();
+    Notifier.set({ notify });
+
+    blinxForm({
+      root,
+      store,
+      recordIndex: 0,
+      view: {
+        sections: [{ title: 'Main', columns: 1, fields: ['name'] }],
+        controls: {
+          saveStatus: true,
+          custom: {
+            label: 'Do',
+            action: (ctx) => {
+              ctx.notify('Hello from action');
+            },
+          },
+        },
+      },
+    });
+
+    getToolbarButton(root, 'Do')?.click();
+    await new Promise(r => setTimeout(r, 0));
+
+    expect(notify).toHaveBeenCalledTimes(1);
+    expect(notify.mock.calls[0][0]?.message).toBe('Hello from action');
+  });
+
   test('blinxForm: after custom action, issues are routed to active notifier impl', async () => {
     const model = {
       fields: {
