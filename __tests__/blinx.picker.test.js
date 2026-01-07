@@ -10,12 +10,12 @@ function byText(root, text) {
 describe('blinxPicker', () => {
   test('multiple: add ➕ adds to cart, dedupes, and enables 🗑️ remove', async () => {
     const model = { fields: { id: { type: 'string' }, name: { type: 'string' } } };
-    const childStore = blinxStore([{ id: 'a', name: 'A' }, { id: 'b', name: 'B' }], model);
+    const store = blinxStore([{ id: 'a', name: 'A' }, { id: 'b', name: 'B' }], model);
     const root = document.createElement('div');
 
     blinxPicker({
       root,
-      childStore,
+      store,
       selectionMode: 'multiple',
       keyField: 'id',
       labelField: 'name',
@@ -55,12 +55,12 @@ describe('blinxPicker', () => {
 
   test('single: once cart has one item, all ➕ are disabled', async () => {
     const model = { fields: { id: { type: 'string' }, name: { type: 'string' } } };
-    const childStore = blinxStore([{ id: 'a', name: 'A' }, { id: 'b', name: 'B' }], model);
+    const store = blinxStore([{ id: 'a', name: 'A' }, { id: 'b', name: 'B' }], model);
     const root = document.createElement('div');
 
     blinxPicker({
       root,
-      childStore,
+      store,
       selectionMode: 'single',
       keyField: 'id',
       labelField: 'name',
@@ -84,13 +84,13 @@ describe('blinxPicker', () => {
 
   test('reset restores initial baseline and confirm returns selected records', async () => {
     const model = { fields: { id: { type: 'string' }, name: { type: 'string' } } };
-    const childStore = blinxStore([{ id: 'a', name: 'A' }, { id: 'b', name: 'B' }], model);
+    const store = blinxStore([{ id: 'a', name: 'A' }, { id: 'b', name: 'B' }], model);
     const root = document.createElement('div');
     const onConfirm = jest.fn();
 
     const { pickerApi } = blinxPicker({
       root,
-      childStore,
+      store,
       selectionMode: 'multiple',
       keyField: 'id',
       labelField: 'name',
@@ -131,14 +131,14 @@ describe('blinxPicker', () => {
 
   test('picker-level status: reset sets status and confirm failure shows error', async () => {
     const model = { fields: { id: { type: 'string' }, name: { type: 'string' } } };
-    const childStore = blinxStore([{ id: 'a', name: 'A' }], model);
+    const store = blinxStore([{ id: 'a', name: 'A' }], model);
     const root = document.createElement('div');
 
     const onConfirm = jest.fn(() => { throw new Error('boom'); });
 
     blinxPicker({
       root,
-      childStore,
+      store,
       selectionMode: 'multiple',
       keyField: 'id',
       labelField: 'name',
