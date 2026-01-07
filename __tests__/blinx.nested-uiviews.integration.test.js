@@ -126,6 +126,49 @@ describe('Nested UI views (Option A registry) (integration)', () => {
     expect(shippingRoot.textContent).not.toContain('country');
   });
 
+  test('SNM nested fields (embedded: false) default to relation.mode=journey (no inline nested form)', () => {
+    const AddressModel = {
+      id: 'AddressSNM',
+      fields: {
+        line1: { type: 'string' },
+        city: { type: 'string' },
+      },
+    };
+
+    const OrderModel = {
+      id: 'OrderSNM',
+      fields: {
+        shippingAddress: { type: 'model', model: AddressModel, embedded: false },
+      },
+    };
+
+    registerModelViews(AddressModel, {
+      form: {
+        default: { sections: [{ title: 'Address', columns: 2, fields: ['line1', 'city'] }] },
+      },
+    });
+
+    registerModelViews(OrderModel, {
+      form: {
+        default: { sections: [{ title: 'Order', columns: 1, fields: ['shippingAddress'] }] },
+      },
+    });
+
+    // SNM normalized: the parent record holds an id, not an embedded object.
+    const store = blinxStore([{ shippingAddress: 'addr-1' }], OrderModel);
+
+    const root = document.createElement('div');
+    blinxForm({ root, store });
+
+    const rel = root.querySelector('[data-blinx-field="shippingAddress"]');
+    expect(rel).toBeTruthy();
+    expect(rel.getAttribute('data-blinx-relation-mode')).toBe('journey');
+
+    // No nested Address form should be rendered inline.
+    expect(rel.textContent).not.toContain('line1');
+    expect(rel.textContent).not.toContain('city');
+  });
+
   test('nested collection item edits do not overwrite each other (no stale closure)', () => {
     const ItemModel = {
       id: 'Item',
