@@ -334,4 +334,56 @@ describe('blinxForm', () => {
     expect(root.querySelector('input, textarea, select')).not.toBeNull();
     expect(root.querySelectorAll('button').length).toBe(0);
   });
+
+  test('relation unlink refreshes journey widget even when flush/save fails', async () => {
+    // SNM-style nested field => defaults to relation.mode = journey.
+    const ChildModel = {
+      id: 'Child',
+      fields: { name: { type: 'string' } },
+    };
+    const ParentModel = {
+      id: 'Parent',
+      fields: {
+        child: { type: 'model', model: ChildModel, embedded: false },
+      },
+    };
+
+    const store = blinxStore([{ child: 'c-1' }], ParentModel);
+    // Simulate an async-backed store where persistence fails.
+    store.save = async () => { throw new Error('save failed'); };
+
+    const view = { sections: [{ title: 'Main', columns: 1, fields: ['child'] }] };
+    const root = document.createElement('div');
+    blinxForm({ root, view, store, recordIndex: 0 }); // controls omitted => internal toolbar
+
+    const rel = root.querySelector('[data-blinx-field="child"]');
+    expect(rel).toBeTruthy();
+    expect(rel.getAttribute('data-blinx-relation-mode')).toBe('journey');
+
+    const preview = rel.querySelector('[data-blinx-part="input"]');
+    expect(preview).toBeTruthy();
+    expect(preview.textContent).toBe('c-1');
+
+    const unlinkBtn = rel.querySelector('button[data-blinx-action="unlink"]');
+    expect(unlinkBtn).toBeTruthy();
+    unlinkBtn.click();
+
+    // Let async click handler run (unlink mutates synchronously, flush fails asynchronously).
+    for (let i = 0; i < 20; i++) {
+      // eslint-disable-next-line no-await-in-loop
+      await Promise.resolve();
+      if (root.textContent.includes('Unlink:')) break;
+    }
+
+    // Data is mutated even though persistence failed.
+    expect(store.getRecord(0).child).toBe(null);
+
+    // UI should reflect the unlink (preview cleared) even if flush/save failed.
+    const rel2 = root.querySelector('[data-blinx-field="child"]');
+    const preview2 = rel2.querySelector('[data-blinx-part="input"]');
+    expect(preview2.textContent).toBe('');
+
+    // Status should indicate failure (persistence failure path).
+    expect(root.textContent).toContain('Unlink: failed.');
+  });
 });
