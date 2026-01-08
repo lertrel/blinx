@@ -377,6 +377,103 @@
 }
 
 /* =========================================================
+  TOAST NOTIFIER (optional)
+  - Used by `createToastNotifier()` (see `lib/blinx.toast-notifier.js`)
+  - Fully scoped to `.blx-*` classes to avoid affecting host apps.
+========================================================= */
+.blx-toast-region {
+  position: fixed;
+  z-index: 2147483000; /* high, but below browser UI */
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  width: min(28rem, calc(100vw - 2rem));
+  padding: 1rem;
+  pointer-events: none; /* allow clicks through except on toast itself */
+}
+
+.blx-toast-region[data-position="top-right"] { top: 0; right: 0; align-items: flex-end; }
+.blx-toast-region[data-position="top-left"] { top: 0; left: 0; align-items: flex-start; }
+.blx-toast-region[data-position="bottom-right"] { bottom: 0; right: 0; align-items: flex-end; }
+.blx-toast-region[data-position="bottom-left"] { bottom: 0; left: 0; align-items: flex-start; }
+
+.blx-toast {
+  pointer-events: auto;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.75rem;
+  align-items: start;
+  padding: 0.75rem 0.9rem;
+  border-radius: calc(var(--blx-radius) * 0.9);
+  border: 1px solid var(--blx-border);
+  background: color-mix(in srgb, var(--blx-surface), white 10%);
+  color: var(--blx-text);
+  box-shadow: var(--blx-shadow-lg);
+  max-width: 100%;
+}
+
+.blx-toast[data-variant="danger"] { border-color: color-mix(in srgb, var(--blx-danger), white 35%); }
+.blx-toast[data-variant="warning"] { border-color: color-mix(in srgb, var(--blx-warning), white 35%); }
+.blx-toast[data-variant="success"] { border-color: color-mix(in srgb, var(--blx-success), white 35%); }
+
+.blx-toast__message {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.blx-toast__right {
+  display: inline-flex;
+  gap: 0.35rem;
+  align-items: center;
+}
+
+.blx-toast__count {
+  display: inline-block;
+  font-size: 0.75rem;
+  color: var(--blx-muted);
+  border: 1px solid color-mix(in srgb, var(--blx-border), transparent 20%);
+  border-radius: 9999px;
+  padding: 0.1rem 0.45rem;
+  background: color-mix(in srgb, var(--blx-surface), white 18%);
+}
+
+.blx-toast__close {
+  appearance: none;
+  border: 1px solid color-mix(in srgb, var(--blx-border), transparent 20%);
+  background: color-mix(in srgb, var(--blx-surface), white 12%);
+  color: var(--blx-text);
+  border-radius: 0.65rem;
+  width: 2rem;
+  height: 2rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  line-height: 1;
+}
+.blx-toast__close:hover { background: color-mix(in srgb, var(--blx-surface), white 18%); }
+.blx-toast__close:focus-visible {
+  outline: 3px solid var(--blx-focus-ring);
+  outline-offset: 2px;
+}
+
+/* Motion (respects prefers-reduced-motion via earlier global theme rule) */
+.blx-toast[data-state="enter"] {
+  opacity: 0;
+  transform: translateY(-6px);
+}
+.blx-toast[data-state="shown"] {
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity 160ms ease, transform 160ms ease;
+}
+.blx-toast[data-state="leaving"] {
+  opacity: 0;
+  transform: translateY(-6px);
+  transition: opacity 160ms ease, transform 160ms ease;
+}
+
+/* =========================================================
   UTILITIES
 ========================================================= */
 .blx-text-muted { color: var(--blx-muted); }

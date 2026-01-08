@@ -5,7 +5,9 @@
 
 # Notifier (`lib/blinx.notifier.js`)
 
-Blinx does not ship a built-in toast/banner UI. Instead it provides a **central, pluggable notifier** that any app can register once and all Blinx components can use without prop-drilling.
+Blinx keeps the core runtime headless: it does **not** auto-render toast/banner UI by default. Instead it provides a **central, pluggable notifier** that any app can register once and all Blinx components can use without prop-drilling.
+
+This repo also includes an **optional DOM toast implementation** (`lib/blinx.toast-notifier.js`) that you can opt into as a convenient default for the built-in HTML adapter.
 
 This solves the “custom actions collect issues but don’t automatically render them” gap described in `docs/wip.md` (Aspect 2 / Iteration 1).
 
@@ -23,6 +25,17 @@ Notifier.set({
     console.log(payload.message);
   },
 });
+```
+
+### 1.0 Optional built-in toast notifier (opt-in)
+
+If you want a ready-to-use toast UI (with Blinx token-based styling), register the toast notifier:
+
+```js
+import { Notifier } from '../lib/blinx.notifier.js';
+import { createToastNotifier } from '../lib/blinx.toast-notifier.js';
+
+Notifier.set(createToastNotifier());
 ```
 
 ### 1.1 `Notifier.set(impl)`

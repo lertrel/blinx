@@ -38,6 +38,11 @@
     import { blinxStore } from '../../lib/blinx.store.js';
     import { blinxForm } from '../../lib/blinx.form.js';
     import { blinxTable } from '../../lib/blinx.table.js';
+    import { Notifier } from '../../lib/blinx.notifier.js';
+    import { createToastNotifier } from '../../lib/blinx.toast-notifier.js';
+
+    // Opt-in toast notifier (no prop drilling; used by ctx.notify(...) and post-action issue surfacing).
+    Notifier.set(createToastNotifier());
 
     const store = blinxStore(initialDataset, productModel);
 
