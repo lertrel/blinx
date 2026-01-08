@@ -126,6 +126,19 @@ This layering keeps validation, diffing, and messaging logic reusable while adap
 - Save/Reset/Delete actions surface user-friendly messages through the injected `status` DOM node using semantic colors (`#2f855a` success, `#e53e3e` errors, slate for neutral states).
 - Form and table share this pattern so embedding apps can style a single CSS class to affect both widgets.
 
+## Notifications (Toast / Banner)
+
+Blinx routes custom-action notifications through a centralized, pluggable notifier (`lib/blinx.notifier.js`). This keeps the core headless while allowing apps to register their preferred toast/banner UI once.
+
+To opt into the built-in DOM toast implementation:
+
+```js
+import { Notifier } from './lib/blinx.notifier.js';
+import { createToastNotifier } from './lib/blinx.toast-notifier.js';
+
+Notifier.set(createToastNotifier());
+```
+
 ## Interceptors & Events
 
 - Store events are granular: `add`, `update`, and `reset` fire once per record, while `remove` batches all removed records into a single payload and `commit` ships the entire dataset snapshot plus the store reference for query access.
