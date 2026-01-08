@@ -52,6 +52,25 @@ describe('createToastNotifier', () => {
     expect(q('.blx-toast')).toBeFalsy();
   });
 
+  test('close button cancels auto-dismiss timer', () => {
+    const n = createToastNotifier({ durationMs: 10_000, dedupeWindowMs: 10_000 });
+    n.notify({ message: 'Closable', issues: null, raw: 'Closable' });
+
+    // Flush the "enter -> shown" 0ms timer so only the auto-dismiss remains.
+    jest.advanceTimersByTime(0);
+    expect(jest.getTimerCount()).toBe(1);
+
+    q('.blx-toast [data-blx-part="close"]')?.click();
+
+    // Close schedules immediate removal (0ms) + transition cleanup (180ms),
+    // and should have cancelled the original long auto-dismiss timer.
+    jest.advanceTimersByTime(0);
+    expect(jest.getTimerCount()).toBe(1);
+
+    jest.advanceTimersByTime(200);
+    expect(q('.blx-toast')).toBeFalsy();
+  });
+
   test('danger variant uses longer timeout by default', () => {
     const n = createToastNotifier({ durationMs: 10, dangerDurationMs: 100 });
     n.notify({ message: 'Issues: X', issues: [{ code: 'X' }], raw: null });
@@ -63,6 +82,16 @@ describe('createToastNotifier', () => {
     jest.advanceTimersByTime(60);
     jest.advanceTimersByTime(200);
     expect(q('.blx-toast')).toBeFalsy();
+  });
+
+  test('dedupe updates variant styling when severity changes', () => {
+    const n = createToastNotifier({ dedupeWindowMs: 10_000, durationMs: 10_000, dangerDurationMs: 10_000 });
+
+    n.notify({ message: 'Same', issues: null, raw: null });
+    expect(q('.blx-toast')?.getAttribute('data-variant')).toBe('info');
+
+    n.notify({ message: 'Same', issues: [{ code: 'E' }], raw: null });
+    expect(q('.blx-toast')?.getAttribute('data-variant')).toBe('danger');
   });
 });
 
