@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Blinx Demo - Notifications</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="../lib/blinx.css">
+  <style>
+    .demo-shell { max-width: 1020px; margin: 0 auto; }
+    .demo-lede { color: var(--blx-muted); }
+    .demo-output { white-space: pre-wrap; padding: 0.75rem; border: 1px solid var(--blx-border); border-radius: var(--blx-radius); background: color-mix(in srgb, var(--blx-surface), white 8%); }
+  </style>
+</head>
+<body>
+  <main id="demo-root" class="blx-page demo-shell" data-blinx-theme>
+    <h1>Notification demo: PR #132 + #133</h1>
+    <p class="demo-lede">
+      Demonstrates the pluggable notifier and opt-in DOM toast notifier. Actions call <code>ctx.notify(...)</code> or surface facade issues after action completion.
+    </p>
+
+    <section class="blx-card blx-stack">
+      <div id="task-form"></div>
+      <h2>Notification log</h2>
+      <pre id="notification-log" class="demo-output">Use the form buttons to create toasts.</pre>
+    </section>
+  </main>
+
+  <script type="module">
+    import { blinxStore } from '../lib/blinx.store.js';
+    import { blinxForm } from '../lib/blinx.form.js';
+    import { Notifier } from '../lib/blinx.notifier.js';
+    import { createToastNotifier } from '../lib/blinx.toast-notifier.js';
+
+    const log = document.getElementById('notification-log');
+    function appendLog(message) {
+      const stamp = new Date().toLocaleTimeString();
+      log.textContent = `${stamp} - ${message}\n${log.textContent}`;
+    }
+
+    Notifier.set(createToastNotifier({
+      root: document.getElementById('demo-root'),
+      durationMs: 7000,
+      dangerDurationMs: 10000,
+      onNotify: ({ payload, deduped }) => {
+        const message = payload?.message || (payload?.issues?.length ? 'Issues occurred.' : 'Notification');
+        appendLog(`${deduped ? 'Updated' : 'Created'} toast: ${message}`);
+      },
+    }));
+
+    const SubtaskModel = {
+      id: 'NotificationDemoSubtask',
+      fields: {
+        id: { type: 'string' },
+        title: { type: 'string' },
+      },
+    };
+
+    const TaskModel = {
+      id: 'NotificationDemoTask',
+      fields: {
+        id: { type: 'string' },
+        title: { type: 'string', required: true },
+        owner: { type: 'string' },
+        subtask: { type: 'model', embedded: true, model: SubtaskModel },
+      },
+    };
+
+    const store = blinxStore([
+      { id: 't-1', title: 'Prepare release notes', owner: 'Mira', subtask: { id: 's-1', title: 'Collect PR list' } },
+    ], TaskModel);
+
+    blinxForm({
+      root: document.getElementById('task-form'),
+      store,
+      recordIndex: 0,
+      view: {
+        sections: [{
+          title: 'Task',
+          columns: 2,
+          fields: ['title', 'owner'],
+        }],
+        controls: {
+          saveButton: true,
+          saveStatus: true,
+          showInfoToast: {
+            label: 'Show info toast',
+            action: 'notify.info',
+          },
+          showIssueToast: {
+            label: 'Create facade issue',
+            variant: 'danger',
+            action: 'notify.issue',
+          },
+          showRepeatedToast: {
+            label: 'Repeat toast',
+            action: 'notify.repeat',
+          },
+        },
+      },
+      actionRegistry: {
+        'notify.info': {
+          handler: (ctx) => {
+            ctx.notify('Task sync queued.');
+            ctx.setStatus('Info toast sent through Notifier.', '#2f855a');
+          },
+        },
+        'notify.issue': {
+          handler: (ctx) => {
+            ctx.model().get('subtask').delete();
+            ctx.setStatus('Issue generated; notifier will surface it.', '#4a5568');
+          },
+        },
+        'notify.repeat': {
+          handler: (ctx) => {
+            ctx.notify('Repeated toast message.');
+            ctx.notify('Repeated toast message.');
+            ctx.setStatus('Repeated messages are deduped in the toast notifier.', '#2f855a');
+          },
+        },
+      },
+    });
+  </script>
+</body>
+</html>

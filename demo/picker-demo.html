@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Blinx Demo - Picker and Cart</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="../lib/blinx.css">
+  <style>
+    .demo-shell { max-width: 1180px; margin: 0 auto; }
+    .demo-lede { color: var(--blx-muted); }
+    .demo-grid { display: grid; grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr); gap: var(--blx-space); }
+    .demo-output { white-space: pre-wrap; padding: 0.75rem; border: 1px solid var(--blx-border); border-radius: var(--blx-radius); background: color-mix(in srgb, var(--blx-surface), white 8%); }
+    @media (max-width: 900px) { .demo-grid { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <main class="blx-page demo-shell" data-blinx-theme>
+    <h1>Picker demo: PR #117 + #123</h1>
+    <p class="demo-lede">
+      Demonstrates the cart collection type, selection baseline/reset, and a picker built from a cart plus a searchable table.
+    </p>
+
+    <div class="demo-grid">
+      <section class="blx-card">
+        <h2>Cart collection (#117)</h2>
+        <p class="demo-lede">Deselect rows, reset the selection baseline, or use the edit action to see record controls.</p>
+        <div id="cart-root"></div>
+        <p><strong>Cart action log:</strong> <span id="cart-log">No cart action yet.</span></p>
+      </section>
+
+      <section class="blx-card">
+        <h2>Picker component (#123)</h2>
+        <p class="demo-lede">
+          Add products to the picker cart, remove them, reset to the initial item, confirm, or create a new in-memory product.
+        </p>
+        <div id="picker-root"></div>
+        <h3>Confirmed selection</h3>
+        <pre id="picker-output" class="demo-output">Confirm the picker to see selected records.</pre>
+      </section>
+    </div>
+  </main>
+
+  <script type="module">
+    import { blinxStore } from '../lib/blinx.store.js';
+    import { blinxCart } from '../lib/blinx.cart.js';
+    import { blinxPicker } from '../lib/blinx.picker.js';
+
+    const ProductModel = {
+      id: 'PickerDemoProduct',
+      fields: {
+        id: { type: 'string', required: true },
+        name: { type: 'string', required: true },
+        category: { type: 'string' },
+        price: { type: 'number', min: 0 },
+      },
+    };
+
+    const products = [
+      { id: 'p-100', name: 'Desk Lamp', category: 'Office', price: 34 },
+      { id: 'p-200', name: 'Travel Mug', category: 'Kitchen', price: 18 },
+      { id: 'p-300', name: 'Notebook Set', category: 'Office', price: 12 },
+      { id: 'p-400', name: 'Cable Organizer', category: 'Tech', price: 9 },
+    ];
+
+    const cartLog = document.getElementById('cart-log');
+    blinxCart({
+      root: document.getElementById('cart-root'),
+      model: ProductModel,
+      labelField: 'name',
+      data: products.slice(0, 3),
+      selectable: true,
+      editable: true,
+      actionRegistry: {
+        'blinx.global.journeys.edit-single-model': {
+          handler: (ctx) => {
+            cartLog.textContent = `Edit requested for ${ctx.record?.name || 'unknown product'}.`;
+          },
+        },
+      },
+    });
+
+    const pickerStore = blinxStore(products, ProductModel);
+    const pickerOutput = document.getElementById('picker-output');
+    let createdCount = 0;
+
+    blinxPicker({
+      root: document.getElementById('picker-root'),
+      store: pickerStore,
+      selectionMode: 'multiple',
+      keyField: 'id',
+      labelField: 'name',
+      initial: [{ id: 'p-200', name: 'Travel Mug' }],
+      views: {
+        table: {
+          columns: [
+            { field: 'name', label: 'Product' },
+            { field: 'category', label: 'Category' },
+            { field: 'price', label: 'Price' },
+          ],
+          searchFields: ['name', 'category'],
+          defaultSort: [{ field: 'name', dir: 'asc' }],
+        },
+      },
+      actionRegistry: {
+        'blinx.global.journeys.create-single-model': {
+          handler: ({ store }) => {
+            createdCount += 1;
+            const id = `p-new-${createdCount}`;
+            store.addRecord({
+              id,
+              name: `New Product ${createdCount}`,
+              category: 'Created in demo',
+              price: 20 + createdCount,
+            });
+          },
+        },
+      },
+      onConfirm: (selected) => {
+        pickerOutput.textContent = JSON.stringify(selected, null, 2);
+      },
+      onCancel: () => {
+        pickerOutput.textContent = 'Picker cancelled and reset to the initial selection.';
+      },
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,201 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Blinx Demo - Relation Journeys</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="../lib/blinx.css">
+  <style>
+    .demo-shell { max-width: 1180px; margin: 0 auto; }
+    .demo-lede { color: var(--blx-muted); }
+    .demo-grid { display: grid; grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr); gap: var(--blx-space); }
+    .demo-output { white-space: pre-wrap; padding: 0.75rem; border: 1px solid var(--blx-border); border-radius: var(--blx-radius); background: color-mix(in srgb, var(--blx-surface), white 8%); }
+    @media (max-width: 900px) { .demo-grid { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <main class="blx-page demo-shell" data-blinx-theme>
+    <h1>Relation journey demo: PR #99/#100 + #124</h1>
+    <p class="demo-lede">
+      Demonstrates self-contained nested model (SNM) relationships: the order stores only child IDs, while relation widgets and picker controls update those IDs.
+    </p>
+
+    <div class="demo-grid">
+      <section class="blx-card">
+        <h2>Order relation widgets</h2>
+        <p class="demo-lede">
+          Use Pick on the customer relation to cycle customers. Unlink clears the relationship.
+        </p>
+        <div id="order-form"></div>
+      </section>
+
+      <section class="blx-card">
+        <h2>Product picker journey</h2>
+        <p class="demo-lede">
+          Confirming this picker replaces the order product relationship with the selected product IDs.
+        </p>
+        <div id="product-picker"></div>
+        <h3>Parent record snapshot</h3>
+        <pre id="record-snapshot" class="demo-output"></pre>
+      </section>
+    </div>
+  </main>
+
+  <script type="module">
+    import { blinxStore } from '../lib/blinx.store.js';
+    import { blinxForm } from '../lib/blinx.form.js';
+    import { blinxPicker } from '../lib/blinx.picker.js';
+    import { registerBlinxApp } from '../lib/blinx.app.js';
+
+    const CustomerModel = {
+      id: 'RelationDemoCustomer',
+      fields: {
+        id: { type: 'string', required: true },
+        name: { type: 'string', required: true },
+        tier: { type: 'string' },
+      },
+    };
+
+    const ProductModel = {
+      id: 'RelationDemoProduct',
+      fields: {
+        id: { type: 'string', required: true },
+        title: { type: 'string', required: true },
+        category: { type: 'string' },
+      },
+    };
+
+    const OrderModel = {
+      id: 'RelationDemoOrder',
+      fields: {
+        id: { type: 'string', required: true },
+        customer: {
+          type: 'model',
+          model: CustomerModel,
+          embedded: false,
+          ref: { keyField: 'id', labelField: 'name' },
+        },
+        products: {
+          type: 'collection',
+          model: ProductModel,
+          embedded: false,
+          ref: { keyField: 'id', labelField: 'title' },
+        },
+      },
+    };
+
+    const customers = [
+      { id: 'c-1', name: 'Ada Lovelace', tier: 'gold' },
+      { id: 'c-2', name: 'Grace Hopper', tier: 'platinum' },
+      { id: 'c-3', name: 'Katherine Johnson', tier: 'silver' },
+    ];
+
+    const products = [
+      { id: 'p-1', title: 'Analytics Dashboard', category: 'Software' },
+      { id: 'p-2', title: 'Support Retainer', category: 'Service' },
+      { id: 'p-3', title: 'Training Seat', category: 'Education' },
+      { id: 'p-4', title: 'Data Connector', category: 'Software' },
+    ];
+
+    const customerStore = blinxStore(customers, CustomerModel);
+    const productStore = blinxStore(products, ProductModel);
+    registerBlinxApp({
+      stores: {
+        RelationDemoCustomer: { store: customerStore },
+        RelationDemoProduct: { store: productStore },
+      },
+    });
+
+    const orderStore = blinxStore([
+      { id: 'ord-1001', customer: { id: 'c-1', name: 'Ada Lovelace' }, products: ['p-1', 'p-3'] },
+    ], OrderModel);
+
+    const snapshot = document.getElementById('record-snapshot');
+    function refreshSnapshot(note = '') {
+      const record = orderStore.getRecord(0);
+      snapshot.textContent = `${note ? `${note}\n\n` : ''}${JSON.stringify(record, null, 2)}`;
+    }
+
+    function currentProductRecords() {
+      const ids = new Set(orderStore.getRecord(0)?.products || []);
+      return productStore.toJSON().filter((record) => ids.has(record.id));
+    }
+
+    let customerIndex = 0;
+    blinxForm({
+      root: document.getElementById('order-form'),
+      store: orderStore,
+      recordIndex: 0,
+      view: {
+        sections: [{
+          title: 'Order',
+          columns: 1,
+          fields: [
+            'id',
+            {
+              field: 'customer',
+              relation: {
+                mode: 'journey',
+                pick: { action: 'demo.pickCustomer' },
+                edit: { enabled: false },
+                unlink: { enabled: true },
+                delete: { enabled: true },
+              },
+            },
+            {
+              field: 'products',
+              relation: {
+                mode: 'journey',
+                pick: { enabled: true },
+                unlink: { enabled: true },
+                delete: { enabled: true },
+              },
+            },
+          ],
+        }],
+        controls: {
+          saveStatus: true,
+        },
+      },
+      actionRegistry: {
+        'demo.pickCustomer': {
+          handler: (ctx) => {
+            customerIndex = (customerIndex + 1) % customers.length;
+            const next = customers[customerIndex];
+            ctx.model().get('customer').set({ id: next.id, name: next.name });
+            refreshSnapshot(`Picked customer ${next.name}.`);
+          },
+        },
+      },
+    });
+
+    blinxPicker({
+      root: document.getElementById('product-picker'),
+      store: productStore,
+      selectionMode: 'multiple',
+      keyField: 'id',
+      labelField: 'title',
+      initial: currentProductRecords(),
+      views: {
+        table: {
+          columns: [
+            { field: 'title', label: 'Product' },
+            { field: 'category', label: 'Category' },
+          ],
+          searchFields: ['title', 'category'],
+          defaultSort: [{ field: 'title', dir: 'asc' }],
+        },
+      },
+      createEnabled: false,
+      onConfirm: (selected) => {
+        orderStore.setField(0, 'products', selected.map((record) => record.id));
+        refreshSnapshot('Product relationship updated from picker.');
+      },
+      onCancel: () => refreshSnapshot('Product picker cancelled.'),
+    });
+
+    orderStore.subscribe(() => refreshSnapshot());
+    refreshSnapshot('Initial parent record stores SNM relationships as IDs.');
+  </script>
+</body>
+</html>
