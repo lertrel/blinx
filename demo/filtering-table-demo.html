@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Blinx Demo - Filtering Table</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="../lib/blinx.css">
+  <style>
+    .demo-shell { max-width: 1180px; margin: 0 auto; }
+    .demo-lede { color: var(--blx-muted); }
+    .demo-output { white-space: pre-wrap; padding: 0.75rem; border: 1px solid var(--blx-border); border-radius: var(--blx-radius); background: color-mix(in srgb, var(--blx-surface), white 8%); }
+  </style>
+</head>
+<body>
+  <main class="blx-page demo-shell" data-blinx-theme>
+    <h1>Filtering/table demo: PR #95</h1>
+    <p class="demo-lede">
+      Demonstrates cached local views, criteria filters, sort changes, table search, and pagination with an in-memory data source.
+    </p>
+
+    <section class="blx-card blx-stack">
+      <div class="blx-toolbar">
+        <button id="show-all" class="blx-btn" data-variant="surface">All products</button>
+        <button id="show-active" class="blx-btn" data-variant="surface">Active only</button>
+        <button id="show-office" class="blx-btn" data-variant="surface">Office category</button>
+        <button id="show-budget" class="blx-btn" data-variant="surface">Price <= 50</button>
+        <button id="sort-expensive" class="blx-btn" data-variant="surface">Sort price desc</button>
+      </div>
+      <p><strong>Active criteria:</strong> <span id="criteria-label">Loading...</span></p>
+      <div id="table-root"></div>
+      <h2>Current local-view rows</h2>
+      <pre id="criteria-output" class="demo-output"></pre>
+    </section>
+  </main>
+
+  <script type="module">
+    import { blinxStore } from '../lib/blinx.store.js';
+    import { blinxCollection } from '../lib/blinx.collection.js';
+
+    const ProductModel = {
+      id: 'FilteringDemoProduct',
+      fields: {
+        id: { type: 'string' },
+        name: { type: 'string' },
+        category: { type: 'string' },
+        status: { type: 'string' },
+        price: { type: 'number' },
+        rating: { type: 'number' },
+      },
+    };
+
+    const data = [
+      { id: 'p-1', name: 'Desk Lamp', category: 'Office', status: 'active', price: 34, rating: 4.8 },
+      { id: 'p-2', name: 'Conference Camera', category: 'Tech', status: 'active', price: 220, rating: 4.5 },
+      { id: 'p-3', name: 'Notebook Set', category: 'Office', status: 'draft', price: 12, rating: 4.1 },
+      { id: 'p-4', name: 'Travel Mug', category: 'Kitchen', status: 'active', price: 18, rating: 4.4 },
+      { id: 'p-5', name: 'Standing Desk', category: 'Office', status: 'active', price: 450, rating: 4.9 },
+      { id: 'p-6', name: 'Cable Organizer', category: 'Tech', status: 'archived', price: 9, rating: 3.8 },
+      { id: 'p-7', name: 'Desk Mat', category: 'Office', status: 'active', price: 28, rating: 4.2 },
+      { id: 'p-8', name: 'Coffee Grinder', category: 'Kitchen', status: 'draft', price: 76, rating: 4.7 },
+      { id: 'p-9', name: 'USB Hub', category: 'Tech', status: 'active', price: 42, rating: 4.0 },
+      { id: 'p-10', name: 'Planner', category: 'Office', status: 'active', price: 15, rating: 3.9 },
+    ];
+
+    const manager = blinxStore({
+      model: ProductModel,
+      dataSource: data,
+      defaultView: 'default',
+      views: {
+        default: {
+          resource: 'products',
+          entityType: 'FilteringDemoProduct',
+          keyField: 'id',
+          defaultPage: { mode: 'offset', offset: 0, limit: 20 },
+          cache: {
+            completeness: 'all',
+            maxEntities: 1000,
+            eviction: { policy: 'lru' },
+            fields: { include: ['id', 'name', 'category', 'status', 'price', 'rating'] },
+          },
+        },
+      },
+    });
+
+    await manager.loadFirst();
+    const localView = manager.collection('default').localView('filteringDemo');
+
+    const criteriaLabel = document.getElementById('criteria-label');
+    const output = document.getElementById('criteria-output');
+
+    function updateOutput() {
+      output.textContent = JSON.stringify(localView.toJSON(), null, 2);
+    }
+
+    async function applyCriteria(label, criteria) {
+      criteriaLabel.textContent = label;
+      await localView.setCriteria({
+        scope: 'all',
+        page: { limit: 50 },
+        ...criteria,
+      });
+      updateOutput();
+    }
+
+    blinxCollection({
+      root: document.getElementById('table-root'),
+      store: localView,
+      paging: { pageSize: 4, page: 0 },
+      actions: { create: false, deleteSelected: false },
+      view: {
+        layout: 'table',
+        columns: [
+          { field: 'name', label: 'Product' },
+          { field: 'category', label: 'Category' },
+          { field: 'status', label: 'Status' },
+          { field: 'price', label: 'Price' },
+          { field: 'rating', label: 'Rating' },
+        ],
+        searchFields: ['name', 'category', 'status'],
+        defaultSort: [{ field: 'rating', dir: 'desc' }],
+      },
+    });
+
+    document.getElementById('show-all').addEventListener('click', () => {
+      applyCriteria('All products, rating descending', { filter: null, sort: [{ field: 'rating', dir: 'desc' }] });
+    });
+    document.getElementById('show-active').addEventListener('click', () => {
+      applyCriteria('Active products only', { filter: { field: 'status', op: 'eq', value: 'active' }, sort: [{ field: 'rating', dir: 'desc' }] });
+    });
+    document.getElementById('show-office').addEventListener('click', () => {
+      applyCriteria('Office category', { filter: { field: 'category', op: 'eq', value: 'Office' }, sort: [{ field: 'name', dir: 'asc' }] });
+    });
+    document.getElementById('show-budget').addEventListener('click', () => {
+      applyCriteria('Budget products: price <= 50', { filter: { field: 'price', op: 'lte', value: 50 }, sort: [{ field: 'price', dir: 'asc' }] });
+    });
+    document.getElementById('sort-expensive').addEventListener('click', () => {
+      applyCriteria('All products, price descending', { filter: null, sort: [{ field: 'price', dir: 'desc' }] });
+    });
+
+    await applyCriteria('All products, rating descending', { filter: null, sort: [{ field: 'rating', dir: 'desc' }] });
+  </script>
+</body>
+</html>

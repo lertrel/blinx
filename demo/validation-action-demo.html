@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Blinx Demo - Validation and Actions</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="../lib/blinx.css">
+  <style>
+    .demo-shell { max-width: 1020px; margin: 0 auto; }
+    .demo-lede { color: var(--blx-muted); }
+    .demo-output { white-space: pre-wrap; padding: 0.75rem; border: 1px solid var(--blx-border); border-radius: var(--blx-radius); background: color-mix(in srgb, var(--blx-surface), white 8%); }
+  </style>
+</head>
+<body>
+  <main class="blx-page demo-shell" data-blinx-theme>
+    <h1>Validation/action demo: PR #45 + #77 + #78</h1>
+    <p class="demo-lede">
+      Demonstrates schema constraints, the built-in phone format, async validators, and declarative action registry validation.
+    </p>
+
+    <section class="blx-card blx-stack">
+      <div id="contact-form"></div>
+      <h2>Action log</h2>
+      <pre id="action-log" class="demo-output">Try Save, Normalize phone, and Send invite.</pre>
+    </section>
+  </main>
+
+  <script type="module">
+    import { blinxStore } from '../lib/blinx.store.js';
+    import { blinxForm } from '../lib/blinx.form.js';
+    import { validateFieldAsync } from '../lib/blinx.validate.js';
+
+    const blockedEmails = new Set(['taken@example.com', 'blocked@example.com']);
+
+    const ContactModel = {
+      id: 'ValidationActionContact',
+      fields: {
+        name: {
+          type: 'string',
+          required: true,
+          trim: true,
+          minLength: 2,
+        },
+        email: {
+          type: 'string',
+          required: true,
+          trim: true,
+          lowercase: true,
+          format: 'email',
+          asyncValidators: [
+            async (value) => blockedEmails.has(String(value || '').toLowerCase()) ? 'Email is already reserved.' : null,
+          ],
+        },
+        phone: {
+          type: 'string',
+          required: true,
+          trim: true,
+          format: 'phone',
+        },
+        seats: {
+          type: 'number',
+          min: 1,
+          max: 25,
+          integerOnly: true,
+          defaultValue: 1,
+        },
+        status: {
+          type: 'enum',
+          values: ['lead', 'invited', 'customer'],
+          defaultValue: 'lead',
+        },
+      },
+    };
+
+    const store = blinxStore([
+      { name: 'Jo', email: 'taken@example.com', phone: '14155552671', seats: 2, status: 'lead' },
+    ], ContactModel);
+
+    const log = document.getElementById('action-log');
+    function writeLog(message) {
+      log.textContent = `${message}\n\nCurrent record:\n${JSON.stringify(store.getRecord(0), null, 2)}`;
+    }
+
+    blinxForm({
+      root: document.getElementById('contact-form'),
+      store,
+      recordIndex: 0,
+      view: {
+        sections: [{
+          title: 'Contact',
+          columns: 2,
+          fields: ['name', 'email', 'phone', 'seats', 'status'],
+        }],
+        controls: {
+          saveButton: true,
+          resetButton: true,
+          saveStatus: true,
+          normalizePhone: {
+            label: 'Normalize phone',
+            action: 'contact.normalizePhone',
+          },
+          sendInvite: {
+            label: 'Send invite',
+            variant: 'primary',
+            action: { id: 'contact.sendInvite', payload: { channel: 'sms' } },
+          },
+        },
+      },
+      actionRegistry: {
+        'contact.normalizePhone': {
+          handler: (ctx) => {
+            const record = ctx.record || {};
+            const digits = String(record.phone || '').replace(/\D/g, '');
+            if (digits.length === 11 && digits.startsWith('1')) {
+              ctx.model().get('phone').set(`+${digits}`);
+            } else if (digits.length === 10) {
+              ctx.model().get('phone').set(`+1${digits}`);
+            }
+            ctx.setStatus('Phone normalized. Save to run schema validation.', '#2f855a');
+            writeLog('Phone normalization action executed.');
+          },
+        },
+        'contact.sendInvite': {
+          validate: [
+            async (ctx) => {
+              const emailErrors = await validateFieldAsync(ctx.record?.email, ContactModel.fields.email);
+              return emailErrors.length ? { ok: false, code: 'EMAIL_INVALID', message: emailErrors.join(' ') } : true;
+            },
+            async (ctx) => {
+              const phoneErrors = await validateFieldAsync(ctx.record?.phone, ContactModel.fields.phone);
+              return phoneErrors.length ? { ok: false, code: 'PHONE_INVALID', message: phoneErrors.join(' ') } : true;
+            },
+          ],
+          handler: (ctx, payload) => {
+            ctx.model().get('status').set('invited');
+            ctx.flush();
+            ctx.setStatus(`Invite sent through ${payload.channel}.`, '#2f855a');
+            writeLog(`Declarative action passed validation and sent invite through ${payload.channel}.`);
+          },
+        },
+      },
+    });
+
+    writeLog('Initial data intentionally has a reserved email and non-E.164 phone number.');
+  </script>
+</body>
+</html>
