@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Blinx Demo - UI View Design</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="../lib/blinx.css">
+  <style>
+    .demo-shell { max-width: 1180px; margin: 0 auto; }
+    .demo-lede { color: var(--blx-muted); }
+    .demo-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: var(--blx-space); }
+    @media (max-width: 900px) { .demo-grid { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <main class="blx-page demo-shell" data-blinx-theme>
+    <h1>UI view design demo: PR #29</h1>
+    <p class="demo-lede">
+      Demonstrates registry-first UI views, nested model/collection rendering, and field-level view overrides.
+    </p>
+
+    <div class="demo-grid">
+      <section class="blx-card">
+        <h2>Registered form view</h2>
+        <p class="demo-lede">
+          The order form is resolved from <code>registerModelViews(OrderModel).form.default</code>.
+        </p>
+        <div id="order-form"></div>
+      </section>
+
+      <section class="blx-card">
+        <h2>Registered collection view</h2>
+        <p class="demo-lede">
+          This collection uses a named registry view: <code>view: "summary"</code>.
+        </p>
+        <div id="order-table"></div>
+      </section>
+    </div>
+  </main>
+
+  <script type="module">
+    import { blinxStore } from '../lib/blinx.store.js';
+    import { blinxForm } from '../lib/blinx.form.js';
+    import { blinxCollection } from '../lib/blinx.collection.js';
+    import { registerModelViews } from '../lib/blinx.ui-views.js';
+
+    const AddressModel = {
+      id: 'UIViewDesignAddress',
+      fields: {
+        line1: { type: 'string' },
+        city: { type: 'string' },
+        country: { type: 'string' },
+      },
+    };
+
+    const CustomerModel = {
+      id: 'UIViewDesignCustomer',
+      fields: {
+        customerId: { type: 'string' },
+        name: { type: 'string' },
+        tier: { type: 'enum', values: ['standard', 'gold', 'platinum'] },
+        address: { type: 'model', model: AddressModel },
+      },
+    };
+
+    const OrderItemModel = {
+      id: 'UIViewDesignOrderItem',
+      fields: {
+        sku: { type: 'string' },
+        quantity: { type: 'number' },
+        price: { type: 'number' },
+      },
+    };
+
+    const OrderModel = {
+      id: 'UIViewDesignOrder',
+      fields: {
+        orderId: { type: 'string' },
+        status: { type: 'enum', values: ['draft', 'packed', 'shipped'] },
+        customer: { type: 'model', model: CustomerModel },
+        shippingAddress: { type: 'model', model: AddressModel },
+        items: { type: 'collection', model: OrderItemModel },
+      },
+    };
+
+    registerModelViews(AddressModel, {
+      form: {
+        default: { sections: [{ title: 'Full address', columns: 1, fields: ['line1', 'city', 'country'] }] },
+        compact: { sections: [{ title: 'Compact address', columns: 1, fields: ['city', 'country'] }] },
+      },
+    });
+
+    registerModelViews(CustomerModel, {
+      form: {
+        default: { sections: [{ title: 'Customer', columns: 2, fields: ['customerId', 'name', 'tier', 'address'] }] },
+      },
+    });
+
+    registerModelViews(OrderItemModel, {
+      form: {
+        default: { sections: [{ title: 'Line item', columns: 3, fields: ['sku', 'quantity', 'price'] }] },
+        compact: { sections: [{ title: 'Line item compact', columns: 2, fields: ['sku', 'quantity'] }] },
+      },
+    });
+
+    registerModelViews(OrderModel, {
+      form: {
+        default: {
+          sections: [{
+            title: 'Order',
+            columns: 1,
+            fields: [
+              'orderId',
+              'status',
+              'customer',
+              { field: 'shippingAddress', view: 'compact' },
+              { field: 'items', itemView: 'compact' },
+            ],
+          }],
+        },
+      },
+      collection: {
+        summary: {
+          layout: 'table',
+          columns: [
+            { field: 'orderId', label: 'Order' },
+            { field: 'status', label: 'Status' },
+          ],
+          searchFields: ['orderId', 'status'],
+        },
+      },
+    });
+
+    const orders = [
+      {
+        orderId: 'ord-1001',
+        status: 'packed',
+        customer: {
+          customerId: 'c-1',
+          name: 'Ada Lovelace',
+          tier: 'platinum',
+          address: { line1: '1 Algorithm Ave', city: 'London', country: 'UK' },
+        },
+        shippingAddress: { line1: 'Dock 8', city: 'London', country: 'UK' },
+        items: [
+          { sku: 'lamp', quantity: 2, price: 45 },
+          { sku: 'desk-mat', quantity: 1, price: 30 },
+        ],
+      },
+      {
+        orderId: 'ord-1002',
+        status: 'draft',
+        customer: {
+          customerId: 'c-2',
+          name: 'Grace Hopper',
+          tier: 'gold',
+          address: { line1: '2 Compiler Ct', city: 'Arlington', country: 'US' },
+        },
+        shippingAddress: { line1: 'Warehouse 3', city: 'Arlington', country: 'US' },
+        items: [{ sku: 'usb-hub', quantity: 3, price: 42 }],
+      },
+    ];
+
+    const store = blinxStore(orders, OrderModel);
+
+    blinxForm({
+      root: document.getElementById('order-form'),
+      store,
+      recordIndex: 0,
+    });
+
+    blinxCollection({
+      root: document.getElementById('order-table'),
+      store,
+      view: 'summary',
+      paging: { pageSize: 5 },
+      actions: { create: false, deleteSelected: false },
+      onItemClick: ({ index }) => {
+        document.getElementById('order-form').innerHTML = '';
+        blinxForm({ root: document.getElementById('order-form'), store, recordIndex: index });
+      },
+    });
+  </script>
+</body>
+</html>

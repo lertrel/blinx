@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Blinx Demo - Conditional Display</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="../lib/blinx.css">
+  <style>
+    .demo-shell { max-width: 1180px; margin: 0 auto; }
+    .demo-lede { color: var(--blx-muted); }
+    .demo-grid { display: grid; grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr); gap: var(--blx-space); }
+    tr[data-risk="high"] { outline: 2px solid var(--blx-danger); background: color-mix(in srgb, var(--blx-danger), transparent 88%); }
+    tr[data-status="approved"] { background: color-mix(in srgb, var(--blx-success), transparent 88%); }
+    td[data-money="true"] { font-weight: 700; color: var(--blx-accent); }
+    [data-confidential-hidden="true"] { display: none; }
+    @media (max-width: 900px) { .demo-grid { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <main class="blx-page demo-shell" data-blinx-theme>
+    <h1>Conditional display demo: PR #32</h1>
+    <p class="demo-lede">
+      Demonstrates <code>present()</code> on form fields and columns plus <code>rowPresent()</code> on collection rows.
+    </p>
+
+    <div class="demo-grid">
+      <section class="blx-card">
+        <h2>Form present()</h2>
+        <p class="demo-lede">Switch records to see fields become hidden or read-only based on record data.</p>
+        <div id="request-form"></div>
+      </section>
+
+      <section class="blx-card">
+        <h2>Collection rowPresent()</h2>
+        <div class="blx-toolbar">
+          <button id="role-reviewer" class="blx-btn" data-variant="surface">Reviewer view</button>
+          <button id="role-admin" class="blx-btn" data-variant="primary">Admin view</button>
+          <span id="role-label"></span>
+        </div>
+        <p class="demo-lede">
+          High-risk rows are outlined. Admin view reveals the confidential note column.
+        </p>
+        <div id="request-table"></div>
+      </section>
+    </div>
+  </main>
+
+  <script type="module">
+    import { blinxStore } from '../lib/blinx.store.js';
+    import { blinxForm } from '../lib/blinx.form.js';
+    import { blinxCollection } from '../lib/blinx.collection.js';
+
+    const RequestModel = {
+      id: 'ConditionalDisplayRequest',
+      fields: {
+        id: { type: 'string' },
+        title: { type: 'string', required: true },
+        status: { type: 'enum', values: ['draft', 'review', 'approved'] },
+        priority: { type: 'enum', values: ['low', 'medium', 'high'] },
+        budget: { type: 'number', min: 0 },
+        approvalNote: { type: 'string' },
+        confidentialNote: { type: 'string' },
+      },
+    };
+
+    const store = blinxStore([
+      { id: 'r-1', title: 'Laptop refresh', status: 'draft', priority: 'medium', budget: 3200, approvalNote: '', confidentialNote: 'Vendor discount expires Friday.' },
+      { id: 'r-2', title: 'Data migration', status: 'review', priority: 'high', budget: 12000, approvalNote: 'Requires security sign-off.', confidentialNote: 'Includes regulated data.' },
+      { id: 'r-3', title: 'Team workshop', status: 'approved', priority: 'low', budget: 1800, approvalNote: 'Approved by finance.', confidentialNote: 'Negotiate catering fee.' },
+    ], RequestModel);
+
+    blinxForm({
+      root: document.getElementById('request-form'),
+      store,
+      recordIndex: 0,
+      view: {
+        sections: [{
+          title: 'Request',
+          columns: 2,
+          fields: [
+            'title',
+            'status',
+            'priority',
+            {
+              field: 'budget',
+              present: (_ctx, record) => ({
+                attrs: {
+                  input: { readonly: record?.status === 'approved' },
+                  wrapper: { 'data-approved-lock': record?.status === 'approved' },
+                },
+              }),
+            },
+            {
+              field: 'approvalNote',
+              present: (_ctx, record) => ({
+                attrs: {
+                  wrapper: { hidden: record?.priority !== 'high' && record?.status !== 'approved' },
+                },
+              }),
+            },
+            {
+              field: 'confidentialNote',
+              present: (ctx) => ({
+                attrs: {
+                  wrapper: { hidden: ctx.role !== 'admin' },
+                },
+              }),
+            },
+          ],
+        }],
+        controls: {
+          prevButton: true,
+          nextButton: true,
+          recordIndicator: true,
+          saveStatus: true,
+        },
+      },
+      context: { role: 'admin' },
+    });
+
+    let role = 'admin';
+    const tableRoot = document.getElementById('request-table');
+    const roleLabel = document.getElementById('role-label');
+
+    function renderTable() {
+      tableRoot.innerHTML = '';
+      roleLabel.textContent = `Current role: ${role}`;
+      blinxCollection({
+        root: tableRoot,
+        store,
+        paging: { pageSize: 10 },
+        actions: { create: false, deleteSelected: false },
+        context: { role },
+        view: {
+          layout: 'table',
+          columns: [
+            { field: 'title', label: 'Title' },
+            { field: 'status', label: 'Status' },
+            { field: 'priority', label: 'Priority' },
+            {
+              field: 'budget',
+              label: 'Budget',
+              present: () => ({ attrs: { cell: { 'data-money': 'true' } } }),
+            },
+            {
+              field: 'confidentialNote',
+              label: 'Confidential',
+              present: (ctx) => ({
+                attrs: {
+                  header: { 'data-confidential-hidden': ctx.role !== 'admin' },
+                  cell: { 'data-confidential-hidden': ctx.role !== 'admin' },
+                },
+              }),
+            },
+          ],
+          rowPresent: (_ctx, record) => ({
+            attrs: {
+              row: {
+                'data-risk': record?.priority === 'high' ? 'high' : 'normal',
+                'data-status': record?.status || '',
+              },
+            },
+          }),
+        },
+      });
+    }
+
+    document.getElementById('role-reviewer').addEventListener('click', () => {
+      role = 'reviewer';
+      renderTable();
+    });
+    document.getElementById('role-admin').addEventListener('click', () => {
+      role = 'admin';
+      renderTable();
+    });
+
+    renderTable();
+  </script>
+</body>
+</html>

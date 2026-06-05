@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Blinx Demo - Generated Default Views</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="../lib/blinx.css">
+  <style>
+    .demo-shell { max-width: 1180px; margin: 0 auto; }
+    .demo-lede { color: var(--blx-muted); }
+    .demo-grid { display: grid; grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr); gap: var(--blx-space); }
+    .demo-output { max-height: 24rem; overflow: auto; white-space: pre-wrap; padding: 0.75rem; border: 1px solid var(--blx-border); border-radius: var(--blx-radius); background: color-mix(in srgb, var(--blx-surface), white 8%); }
+    @media (max-width: 900px) { .demo-grid { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <main class="blx-page demo-shell" data-blinx-theme>
+    <h1>Default view schema demo: PR #30</h1>
+    <p class="demo-lede">
+      No form or collection views are provided here. Blinx generates safe defaults from the model schema.
+    </p>
+
+    <div class="demo-grid">
+      <section class="blx-card">
+        <h2>Generated form</h2>
+        <div id="generated-form"></div>
+      </section>
+
+      <section class="blx-card">
+        <h2>Generated collection</h2>
+        <div id="generated-table"></div>
+      </section>
+    </div>
+
+    <section class="blx-card blx-stack">
+      <h2>Generated UI view dump</h2>
+      <p class="demo-lede">
+        Long text, JSON, secrets, blobs, arrays, and relationship-like fields are hidden by default.
+      </p>
+      <pre id="dump-output" class="demo-output"></pre>
+    </section>
+  </main>
+
+  <script type="module">
+    import { blinxStore } from '../lib/blinx.store.js';
+    import { blinxForm } from '../lib/blinx.form.js';
+    import { blinxCollection } from '../lib/blinx.collection.js';
+    import { blinxDump } from '../lib/blinx.dump.js';
+    import { BlinxConfig } from '../lib/blinx.config.js';
+
+    BlinxConfig.setDefaultViewGenerationEnabled(true);
+
+    const CustomerModel = {
+      id: 'GeneratedDefaultCustomer',
+      fields: {
+        id: { type: 'string' },
+        name: { type: 'string', required: true },
+        tier: { type: 'enum', values: ['bronze', 'silver', 'gold'] },
+        active: { type: 'boolean' },
+        createdAt: { type: 'date' },
+        accountManager: { type: 'string' },
+        notes: { type: 'longText' },
+        preferences: { type: 'json' },
+        apiToken: { type: 'secret' },
+        avatarBlob: { type: 'blob' },
+        tags: { type: 'array' },
+      },
+    };
+
+    const customers = [
+      { id: 'c-1', name: 'Ada Lovelace', tier: 'gold', active: true, createdAt: '2026-01-03', accountManager: 'Mira', notes: 'VIP', preferences: { theme: 'dark' }, apiToken: 'secret-1', avatarBlob: 'binary', tags: ['math'] },
+      { id: 'c-2', name: 'Grace Hopper', tier: 'silver', active: true, createdAt: '2026-01-05', accountManager: 'Noah', notes: 'Compiler interest', preferences: { theme: 'light' }, apiToken: 'secret-2', avatarBlob: 'binary', tags: ['navy'] },
+      { id: 'c-3', name: 'Katherine Johnson', tier: 'gold', active: false, createdAt: '2026-01-01', accountManager: 'Lin', notes: 'Space program', preferences: { theme: 'contrast' }, apiToken: 'secret-3', avatarBlob: 'binary', tags: ['flight'] },
+    ];
+
+    const store = blinxStore(customers, CustomerModel);
+
+    blinxForm({
+      root: document.getElementById('generated-form'),
+      store,
+      recordIndex: 0,
+    });
+
+    blinxCollection({
+      root: document.getElementById('generated-table'),
+      store,
+      paging: { pageSize: 5 },
+      actions: { create: false, deleteSelected: false },
+    });
+
+    document.getElementById('dump-output').textContent = blinxDump('ui-view');
+  </script>
+</body>
+</html>

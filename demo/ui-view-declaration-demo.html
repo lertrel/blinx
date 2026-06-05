@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Blinx Demo - UI View Declarations</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="../lib/blinx.css">
+  <style>
+    .demo-shell { max-width: 1180px; margin: 0 auto; }
+    .demo-lede { color: var(--blx-muted); }
+    .demo-grid { display: grid; grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr); gap: var(--blx-space); }
+    .demo-badge { display: inline-block; padding: 0.15rem 0.45rem; border-radius: 999px; background: var(--blx-primary); color: white; font-size: 0.85rem; }
+    @media (max-width: 900px) { .demo-grid { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <main class="blx-page demo-shell" data-blinx-theme>
+    <h1>UI-view declaration support demo: PR #85</h1>
+    <p class="demo-lede">
+      Demonstrates registry-first view resolution, named view switching, custom renderer capabilities, and fallback to the default renderer.
+    </p>
+
+    <div class="demo-grid">
+      <section class="blx-card">
+        <h2>Registry form view</h2>
+        <p class="demo-lede">The form resolves <code>Asset.form.default</code> from the UI-view registry.</p>
+        <div id="asset-form"></div>
+      </section>
+
+      <section class="blx-card">
+        <h2>Registry collection views + renderer fallback</h2>
+        <div class="blx-toolbar">
+          <button id="view-default" class="blx-btn" data-variant="primary">Default registry view</button>
+          <button id="view-compact" class="blx-btn" data-variant="surface">Compact named view</button>
+          <span id="view-label"></span>
+        </div>
+        <p class="demo-lede">
+          The custom renderer decorates supported cells with <span class="demo-badge">custom</span>. Blob cells are rejected by
+          <code>supportsField()</code> and rendered by the configured fallback renderer instead.
+        </p>
+        <div id="asset-table"></div>
+      </section>
+    </div>
+  </main>
+
+  <script type="module">
+    import { blinxStore } from '../lib/blinx.store.js';
+    import { blinxForm } from '../lib/blinx.form.js';
+    import { blinxCollection } from '../lib/blinx.collection.js';
+    import { BlinxDefaultUI } from '../lib/blinx.adapters.default.js';
+    import { BlinxConfig } from '../lib/blinx.config.js';
+    import { RegisteredUI } from '../lib/blinx.registered-ui.js';
+    import { registerModelViews } from '../lib/blinx.ui-views.js';
+
+    const defaultUI = new BlinxDefaultUI();
+    RegisteredUI.register('demo-compact-renderer', {
+      supportsField({ fieldDef, kind, mode }) {
+        if (kind === 'collection' && mode === 'cell' && fieldDef?.type === 'blob') return false;
+        return true;
+      },
+      createField(args) {
+        return defaultUI.createField(args);
+      },
+      formatCell(value, def = {}) {
+        if (def.type === 'number') return `custom:${value ?? ''}`;
+        if (def.type === 'string') return `custom:${String(value ?? '').toUpperCase()}`;
+        return defaultUI.formatCell(value, def);
+      },
+    });
+
+    BlinxConfig.setUIRendererFallback('default');
+    BlinxConfig.setUIRendererStrict(true);
+
+    const AssetModel = {
+      id: 'UIViewDeclarationAsset',
+      fields: {
+        id: { type: 'string' },
+        name: { type: 'string' },
+        owner: { type: 'string' },
+        cost: { type: 'number' },
+        attachment: { type: 'blob' },
+      },
+    };
+
+    registerModelViews(AssetModel, {
+      form: {
+        default: {
+          sections: [{ title: 'Asset', columns: 2, fields: ['id', 'name', 'owner', 'cost'] }],
+        },
+      },
+      collection: {
+        default: {
+          layout: 'table',
+          renderer: 'demo-compact-renderer',
+          columns: [
+            { field: 'name', label: 'Name' },
+            { field: 'owner', label: 'Owner' },
+            { field: 'cost', label: 'Cost' },
+            { field: 'attachment', label: 'Attachment' },
+          ],
+          searchFields: ['name', 'owner'],
+        },
+        compact: {
+          layout: 'table',
+          renderer: 'demo-compact-renderer',
+          columns: [
+            { field: 'name', label: 'Name' },
+            { field: 'cost', label: 'Cost' },
+          ],
+        },
+      },
+    });
+
+    const store = blinxStore([
+      { id: 'a-1', name: 'Laptop', owner: 'Mira', cost: 1800, attachment: 'warranty.pdf' },
+      { id: 'a-2', name: 'Projector', owner: 'Noah', cost: 650, attachment: 'manual.pdf' },
+      { id: 'a-3', name: 'Badge Printer', owner: 'Lin', cost: 420, attachment: 'driver.zip' },
+    ], AssetModel);
+
+    blinxForm({
+      root: document.getElementById('asset-form'),
+      store,
+      recordIndex: 0,
+    });
+
+    const tableRoot = document.getElementById('asset-table');
+    const viewLabel = document.getElementById('view-label');
+
+    function renderCollection(viewName = undefined) {
+      tableRoot.innerHTML = '';
+      viewLabel.textContent = viewName ? `Current view: ${viewName}` : 'Current view: default';
+      blinxCollection({
+        root: tableRoot,
+        store,
+        view: viewName,
+        paging: { pageSize: 10 },
+        actions: { create: false, deleteSelected: false },
+      });
+    }
+
+    document.getElementById('view-default').addEventListener('click', () => renderCollection());
+    document.getElementById('view-compact').addEventListener('click', () => renderCollection('compact'));
+
+    renderCollection();
+  </script>
+</body>
+</html>
