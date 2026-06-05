@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Blinx Demo - Computed Fields</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="../lib/blinx.css">
+  <style>
+    .demo-shell { max-width: 1040px; margin: 0 auto; }
+    .demo-lede { color: var(--blx-muted); }
+    .demo-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(18rem, 0.65fr); gap: var(--blx-space); }
+    .demo-output { white-space: pre-wrap; padding: 0.75rem; border: 1px solid var(--blx-border); border-radius: var(--blx-radius); background: color-mix(in srgb, var(--blx-surface), white 8%); }
+    @media (max-width: 850px) { .demo-grid { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <main class="blx-page demo-shell" data-blinx-theme>
+    <h1>Computed fields demo: PR #31</h1>
+    <p class="demo-lede">
+      Edit price, quantity, discount, or tax. Blinx recomputes read-only virtual fields from their dependencies.
+    </p>
+
+    <div class="demo-grid">
+      <section class="blx-card">
+        <div id="invoice-form"></div>
+      </section>
+      <section class="blx-card">
+        <h2>Computed snapshot</h2>
+        <p class="demo-lede">Computed fields appear in <code>toJSON()</code> but are not directly settable.</p>
+        <pre id="computed-output" class="demo-output"></pre>
+        <div class="blx-toolbar">
+          <button id="boost-qty" class="blx-btn" data-variant="surface">Set quantity to 5</button>
+          <button id="try-set-computed" class="blx-btn" data-variant="danger">Try setting computed total</button>
+        </div>
+        <p id="computed-status"></p>
+      </section>
+    </div>
+  </main>
+
+  <script type="module">
+    import { blinxStore } from '../lib/blinx.store.js';
+    import { blinxForm } from '../lib/blinx.form.js';
+
+    const money = (value) => Math.round((Number(value) || 0) * 100) / 100;
+
+    const InvoiceLineModel = {
+      id: 'ComputedDemoInvoiceLine',
+      fields: {
+        sku: { type: 'string', required: true },
+        price: { type: 'number', min: 0 },
+        quantity: { type: 'number', min: 1, integerOnly: true },
+        discountRate: { type: 'number', min: 0, max: 1, step: 0.05 },
+        taxRate: { type: 'number', min: 0, max: 1, step: 0.01 },
+        subtotal: {
+          type: 'number',
+          computed: true,
+          dependsOn: ['price', 'quantity'],
+          compute: (record) => money(record.price * record.quantity),
+        },
+        discountAmount: {
+          type: 'number',
+          computed: true,
+          dependsOn: ['subtotal', 'discountRate'],
+          compute: (record) => money(record.subtotal * record.discountRate),
+        },
+        total: {
+          type: 'number',
+          computed: true,
+          dependsOn: ['subtotal', 'discountAmount', 'taxRate'],
+          compute: (record) => money((record.subtotal - record.discountAmount) * (1 + record.taxRate)),
+        },
+      },
+    };
+
+    const store = blinxStore([{
+      sku: 'desk-lamp',
+      price: 45,
+      quantity: 2,
+      discountRate: 0.1,
+      taxRate: 0.07,
+    }], InvoiceLineModel);
+
+    const output = document.getElementById('computed-output');
+    const status = document.getElementById('computed-status');
+
+    function refreshOutput(message = '') {
+      output.textContent = JSON.stringify(store.toJSON()[0], null, 2);
+      status.textContent = message;
+    }
+
+    blinxForm({
+      root: document.getElementById('invoice-form'),
+      store,
+      recordIndex: 0,
+      view: {
+        sections: [{
+          title: 'Invoice line',
+          columns: 2,
+          fields: ['sku', 'price', 'quantity', 'discountRate', 'taxRate', 'subtotal', 'discountAmount', 'total'],
+        }],
+        controls: {
+          saveButton: true,
+          resetButton: true,
+          saveStatus: true,
+        },
+      },
+    });
+
+    store.subscribe(() => refreshOutput('Dependencies changed; computed fields were invalidated and recomputed.'));
+    document.getElementById('boost-qty').addEventListener('click', () => {
+      store.setField(0, 'quantity', 5);
+    });
+    document.getElementById('try-set-computed').addEventListener('click', () => {
+      try {
+        store.setField(0, 'total', 999);
+      } catch (error) {
+        status.textContent = error.message;
+      }
+      refreshOutput(status.textContent);
+    });
+
+    refreshOutput('Initial computed values.');
+  </script>
+</body>
+</html>

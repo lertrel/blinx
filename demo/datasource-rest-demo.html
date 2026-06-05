@@ -1,0 +1,227 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Blinx Demo - Data Sources and REST</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="../lib/blinx.css">
+  <style>
+    .demo-shell { max-width: 1180px; margin: 0 auto; }
+    .demo-lede { color: var(--blx-muted); }
+    .demo-grid { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(20rem, 0.9fr); gap: var(--blx-space); }
+    .demo-output { max-height: 30rem; overflow: auto; white-space: pre-wrap; padding: 0.75rem; border: 1px solid var(--blx-border); border-radius: var(--blx-radius); background: color-mix(in srgb, var(--blx-surface), white 8%); }
+    @media (max-width: 900px) { .demo-grid { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <main class="blx-page demo-shell" data-blinx-theme>
+    <h1>Data source + REST demo: PR #24 / #25</h1>
+    <p class="demo-lede">
+      Demonstrates a remote-capable Blinx store with a REST datasource, mock HTTP query/mutate calls, optimistic save, create reconciliation, and ETag conflicts.
+    </p>
+
+    <div class="demo-grid">
+      <section class="blx-card blx-stack">
+        <div class="blx-toolbar">
+          <button id="reload" class="blx-btn" data-variant="surface">Reload from mock REST</button>
+          <button id="edit-first" class="blx-btn" data-variant="surface">Edit first row locally</button>
+          <button id="save" class="blx-btn" data-variant="primary">Save changes</button>
+          <button id="create-save" class="blx-btn" data-variant="surface">Create + save</button>
+          <button id="conflict-save" class="blx-btn" data-variant="danger">Simulate conflict + save</button>
+        </div>
+        <p><strong>Status:</strong> <span id="status">Loading...</span></p>
+        <div id="remote-table"></div>
+      </section>
+
+      <section class="blx-card">
+        <h2>Mock REST traffic and store state</h2>
+        <pre id="rest-log" class="demo-output"></pre>
+      </section>
+    </div>
+  </main>
+
+  <script type="module">
+    import { blinxStore } from '../lib/blinx.store.js';
+    import { blinxCollection } from '../lib/blinx.collection.js';
+    import { BlinxRestDataSource } from '../lib/blinx.datasource.js';
+
+    const ProductModel = {
+      id: 'RestDemoProduct',
+      fields: {
+        id: { type: 'string' },
+        name: { type: 'string' },
+        category: { type: 'string' },
+        price: { type: 'number' },
+        version: { type: 'string' },
+      },
+    };
+
+    let nextId = 4;
+    const serverRecords = [
+      { id: 'p-1', name: 'Desk Lamp', category: 'Office', price: 45, version: '"v1"' },
+      { id: 'p-2', name: 'Travel Mug', category: 'Kitchen', price: 18, version: '"v1"' },
+      { id: 'p-3', name: 'USB Hub', category: 'Tech', price: 42, version: '"v1"' },
+    ];
+    const traffic = [];
+
+    function headers(map = {}) {
+      const lower = new Map(Object.entries(map).map(([key, value]) => [String(key).toLowerCase(), String(value)]));
+      return { get: (name) => lower.get(String(name).toLowerCase()) || null };
+    }
+
+    function response({ status = 200, json = null, headerMap = {} } = {}) {
+      return {
+        ok: status >= 200 && status < 300,
+        status,
+        headers: headers(headerMap),
+        async json() { return json; },
+      };
+    }
+
+    function bumpVersion(record) {
+      const current = Number(String(record.version || '"v0"').replace(/\D/g, '')) || 0;
+      record.version = `"v${current + 1}"`;
+      return record.version;
+    }
+
+    async function mockFetch(url, init = {}) {
+      const method = init.method || 'GET';
+      const parsed = new URL(url, window.location.origin);
+      traffic.push({
+        method,
+        url: parsed.pathname + parsed.search,
+        ifMatch: init.headers?.['If-Match'] || init.headers?.['if-match'] || null,
+        body: init.body ? JSON.parse(init.body) : null,
+      });
+
+      const idMatch = parsed.pathname.match(/\/products\/([^/]+)$/);
+      if (method === 'GET' && !idMatch) {
+        return response({
+          status: 200,
+          json: serverRecords.map((record) => ({ ...record })),
+          headerMap: { 'x-total-count': String(serverRecords.length) },
+        });
+      }
+
+      if (method === 'GET' && idMatch) {
+        const record = serverRecords.find((item) => item.id === idMatch[1]);
+        return record
+          ? response({ status: 200, json: { ...record }, headerMap: { etag: record.version } })
+          : response({ status: 404, json: { message: 'Not found' } });
+      }
+
+      if (method === 'POST') {
+        const data = init.body ? JSON.parse(init.body) : {};
+        const record = { id: `p-${nextId++}`, name: data.name || 'Created product', category: data.category || 'Demo', price: Number(data.price) || 1, version: '"v1"' };
+        serverRecords.push(record);
+        return response({ status: 201, json: { ...record }, headerMap: { etag: record.version } });
+      }
+
+      if (method === 'PATCH' && idMatch) {
+        const record = serverRecords.find((item) => item.id === idMatch[1]);
+        if (!record) return response({ status: 404, json: { message: 'Not found' } });
+        const ifMatch = init.headers?.['If-Match'] || init.headers?.['if-match'];
+        if (ifMatch && ifMatch !== record.version) {
+          return response({ status: 412, json: { message: 'Stale version' } });
+        }
+        Object.assign(record, init.body ? JSON.parse(init.body) : {});
+        bumpVersion(record);
+        return response({ status: 200, json: { ...record }, headerMap: { etag: record.version } });
+      }
+
+      return response({ status: 405, json: { message: `Unsupported mock method ${method}` } });
+    }
+
+    const dataSource = new BlinxRestDataSource({
+      baseUrl: '/mock-api',
+      fetch: mockFetch,
+    });
+
+    const store = blinxStore({
+      model: ProductModel,
+      dataSource,
+      view: {
+        name: 'products',
+        resource: 'products',
+        entityType: 'RestDemoProduct',
+        keyField: 'id',
+        versionField: 'version',
+        defaultPage: { mode: 'page', page: 0, limit: 20 },
+      },
+    });
+
+    const status = document.getElementById('status');
+    const log = document.getElementById('rest-log');
+
+    function writeStatus(message) {
+      status.textContent = message;
+      log.textContent = JSON.stringify({
+        message,
+        traffic,
+        localRows: store.toJSON(),
+        diff: store.diff(),
+        serverRows: serverRecords,
+      }, null, 2);
+    }
+
+    function renderTable() {
+      blinxCollection({
+        root: document.getElementById('remote-table'),
+        store,
+        paging: { pageSize: 10 },
+        actions: { create: false, deleteSelected: false },
+        view: {
+          layout: 'table',
+          columns: [
+            { field: 'id', label: 'ID' },
+            { field: 'name', label: 'Name' },
+            { field: 'category', label: 'Category' },
+            { field: 'price', label: 'Price' },
+            { field: 'version', label: 'Version' },
+          ],
+        },
+      });
+    }
+
+    async function reload() {
+      await store.loadFirst();
+      writeStatus('Loaded rows through BlinxRestDataSource.query().');
+    }
+
+    document.getElementById('reload').addEventListener('click', async () => {
+      await reload();
+    });
+
+    document.getElementById('edit-first').addEventListener('click', () => {
+      const first = store.getRecord(0);
+      store.setField(0, 'price', Number(first.price || 0) + 5);
+      writeStatus('Edited first row locally. Diff is queued until save().');
+    });
+
+    document.getElementById('save').addEventListener('click', async () => {
+      const result = await store.save();
+      writeStatus(`Save complete. applied=${result.applied?.length || 0}, conflicts=${result.conflicts?.length || 0}, rejected=${result.rejected?.length || 0}.`);
+    });
+
+    document.getElementById('create-save').addEventListener('click', async () => {
+      const index = store.addRecord({ name: 'Created in demo', category: 'Demo', price: 99 });
+      const beforeId = store.getRecord(index)?.id;
+      const result = await store.save();
+      const afterId = store.getRecord(index)?.id;
+      writeStatus(`Create saved. temporary id ${beforeId} reconciled to ${afterId}. applied=${result.applied?.length || 0}.`);
+    });
+
+    document.getElementById('conflict-save').addEventListener('click', async () => {
+      const serverFirst = serverRecords[0];
+      serverFirst.name = 'Server-side rename';
+      bumpVersion(serverFirst);
+      store.setField(0, 'price', Number(store.getRecord(0)?.price || 0) + 7);
+      const result = await store.save();
+      writeStatus(`Conflict save complete. conflicts=${result.conflicts?.length || 0}. Latest server record was fetched automatically.`);
+    });
+
+    await reload();
+    renderTable();
+  </script>
+</body>
+</html>
